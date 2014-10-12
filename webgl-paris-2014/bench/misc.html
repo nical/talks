@@ -1,0 +1,304 @@
+
+<pre>
+
+</pre>
+
+<script>
+
+var NUM_RUNS = 1000;
+
+function println(msg) {
+    document.querySelector("pre").innerHTML += msg + "<br>";
+}
+
+function js_array(size) {
+    var array = [];
+    for (var i = 0; i < size; ++i) {
+        array.push(0.0);
+    }
+    return array;
+}
+
+function js_array2(size) {
+    var array = [];
+    for (var i = 0; i < size; i+=1) {
+        array[i] = 0.0;
+    }
+    return array;
+}
+
+// trying to mix ints and floats during js array intialization doesn't make a
+// big difference
+
+// trying to allocate out of order doesn't seem to make a big difference
+//function js_array2(size) {
+//    var array = [];
+//    for (var i = 0; i < size; i+=2) {
+//        array[i] = 0.0;
+//    }
+//    for (var i = 0; i < size; i+=2) {
+//        array[i+1] = 0.0;
+//    }
+//    return array;
+//}
+
+function js_array3(size) {
+    var array = [];
+    for (var i = 0; i < size; ++i) {
+        array[size - i - 1] = 0.0;
+    }
+// this deoptimises the shit of array accesses (close to a 100 times slower!)
+//    array[size+1] = {foo:"bar"};
+    return array;
+}
+
+//function js_array3(size) {
+//    var array = [];
+//    for (var i = 0; i < size/2; ++i) {
+//        array[i*2] = 0.0;
+//    }
+//    for (var i = 0; i < size/2; ++i) {
+//        array[i*2+1] = 0.0;
+//    }
+//    return array;
+//}
+
+function f64_array(size) {
+    return new Float64Array(size);
+}
+
+function f32_array(size) {
+    return new Float64Array(size);
+}
+
+function test_with_stride(array_func, stride, num_elements) {
+    var array_size = (num_elements*stride)|0;
+    var stride = stride|0;
+    var pos_array = array_func(array_size);
+    var vel_array = array_func(array_size);
+    var start_time = Date.now();
+
+    for (var r=0; r < NUM_RUNS; ++r) {
+        for (var i = 0; i < array_size; i+=stride) {
+            pos_array[i] += vel_array[i];
+        }
+    }
+
+    var end_time = Date.now();
+
+    println("sequential (stride "+stride+"): " + (end_time - start_time));
+}
+
+function test_interleaved(array_func, stride, num_elements) {
+    var array_size = (num_elements*stride)|0;
+    var stride = stride|0;
+    var array = array_func(array_size);
+
+    var start_time = Date.now();
+
+    for (var r=0; r < NUM_RUNS; ++r) {
+        for (var i=0; i < array_size; i+=stride) {
+            array[i+0] += array[i+3];    
+            array[i+1] += array[i+4];    
+            array[i+2] += array[i+5];    
+        }
+    }
+
+    var end_time = Date.now();
+
+    println("interleaved (stride "+stride+"): " + (end_time - start_time));
+}
+
+function test_unrolled_8(array_func, num_elements) {
+    var array_size = (num_elements * 8)|0;
+    var stride = stride|0;
+    var pos_array = array_func(array_size);
+    var vel_array = array_func(array_size);
+
+    var start_time = Date.now();
+
+    for (var r=0; r < NUM_RUNS; ++r) {
+        for (var i = 0; i < array_size; i+=8) {
+            pos_array[i+0] += vel_array[i+0];
+            pos_array[i+1] += vel_array[i+1];
+            pos_array[i+2] += vel_array[i+2];
+            pos_array[i+3] += vel_array[i+3];
+            pos_array[i+4] += vel_array[i+4];
+            pos_array[i+5] += vel_array[i+5];
+            pos_array[i+6] += vel_array[i+6];
+            pos_array[i+7] += vel_array[i+7];
+        }
+    }
+
+    var end_time = Date.now();
+
+    println("sequential (unrolled stride 8): " + (end_time - start_time));
+}
+
+function test_unrolled_write_only(array_func, num_elements) {
+    var array_size = (num_elements * 8)|0;
+    var stride = stride|0;
+    var pos_array = array_func(array_size);
+    var vel_array = array_func(array_size);
+
+    var start_time = Date.now();
+
+    for (var r=0; r < NUM_RUNS; ++r) {
+        for (var i = 0; i < array_size; i+=8) {
+            pos_array[i+0] += 1;
+            pos_array[i+1] += 1;
+            pos_array[i+2] += 1;
+            pos_array[i+3] += 1;
+            pos_array[i+4] += 1;
+            pos_array[i+5] += 1;
+            pos_array[i+6] += 1;
+            pos_array[i+7] += 1;
+        }
+    }
+
+    var end_time = Date.now();
+
+    println("sequential (unrolled stride 8) write-only: " + (end_time - start_time));
+}
+
+function test_unrolled_read_only(array_func, num_elements) {
+    var array_size = (num_elements * 8)|0;
+    var stride = stride|0;
+    var pos_array = array_func(array_size);
+    var vel_array = array_func(array_size);
+
+    var start_time = Date.now();
+
+    var accum = 0.0;
+    for (var r=0; r < NUM_RUNS; ++r) {
+        for (var i = 0; i < array_size; i+=8) {
+            accum += pos_array[i+0];
+            accum += pos_array[i+1];
+            accum += pos_array[i+2];
+            accum += pos_array[i+3];
+            accum += pos_array[i+4];
+            accum += pos_array[i+5];
+            accum += pos_array[i+6];
+            accum += pos_array[i+7];
+        }
+    }
+
+    var end_time = Date.now();
+
+    println("sequential (unrolled stride 8) write-only: " + (end_time - start_time));
+}
+
+function test_unrolled_same_8(array_func, num_elements) {
+    var array_size = (num_elements * 8)|0;
+    var stride = stride|0;
+    var pos_array = array_func(array_size);
+    var vel_array = array_func(array_size);
+
+    var start_time = Date.now();
+
+    for (var r=0; r < NUM_RUNS; ++r) {
+        for (var i = 0; i < array_size; i+=8) {
+            pos_array[i] += vel_array[i];
+            pos_array[i] += vel_array[i];
+            pos_array[i] += vel_array[i];
+            pos_array[i] += vel_array[i];
+            pos_array[i] += vel_array[i];
+            pos_array[i] += vel_array[i];
+            pos_array[i] += vel_array[i];
+            pos_array[i] += vel_array[i];
+        }
+    }
+
+    var end_time = Date.now();
+
+    println("sequential (unrolled stride 8 same): " + (end_time - start_time));
+}
+
+function test_unrolled_skip_8(array_func, num_elements) {
+    var array_size = (num_elements * 8)|0;
+    var stride = stride|0;
+    var pos_array = array_func(array_size);
+    var vel_array = array_func(array_size);
+
+    var start_time = Date.now();
+
+    for (var r=0; r < NUM_RUNS; ++r) {
+        for (var i = 0; i < array_size; i+=8) {
+            pos_array[i] += vel_array[i];
+        }
+    }
+
+    var end_time = Date.now();
+
+    println("sequential (unrolled stride 8 skip): " + (end_time - start_time));
+}
+
+
+var NUM_ELEMENTS = 10000;
+
+function run_test_cases(array_func) {
+    test_with_stride(array_func, 1,  NUM_ELEMENTS);
+    test_with_stride(array_func, 1,  NUM_ELEMENTS);
+    test_with_stride(array_func, 2,  NUM_ELEMENTS);
+    test_with_stride(array_func, 3,  NUM_ELEMENTS);
+    test_with_stride(array_func, 4,  NUM_ELEMENTS);
+    test_with_stride(array_func, 5,  NUM_ELEMENTS);
+    test_with_stride(array_func, 6,  NUM_ELEMENTS);
+    test_with_stride(array_func, 7,  NUM_ELEMENTS);
+    test_with_stride(array_func, 8,  NUM_ELEMENTS);
+    test_with_stride(array_func, 9,  NUM_ELEMENTS);
+    test_with_stride(array_func, 10, NUM_ELEMENTS);
+    test_with_stride(array_func, 11, NUM_ELEMENTS);
+    test_with_stride(array_func, 12, NUM_ELEMENTS);
+    test_with_stride(array_func, 13, NUM_ELEMENTS);
+    test_with_stride(array_func, 14, NUM_ELEMENTS);
+    test_with_stride(array_func, 15, NUM_ELEMENTS);
+    test_with_stride(array_func, 16, NUM_ELEMENTS);
+    test_with_stride(array_func, 17, NUM_ELEMENTS);
+    test_with_stride(array_func, 18, NUM_ELEMENTS);
+    test_with_stride(array_func, 19, NUM_ELEMENTS);
+
+
+    test_interleaved(array_func, 6,  NUM_ELEMENTS);
+    test_interleaved(array_func, 7,  NUM_ELEMENTS);
+    test_interleaved(array_func, 8,  NUM_ELEMENTS);
+    test_interleaved(array_func, 9,  NUM_ELEMENTS);
+    test_interleaved(array_func, 10, NUM_ELEMENTS);
+    test_interleaved(array_func, 11, NUM_ELEMENTS);
+    test_interleaved(array_func, 12, NUM_ELEMENTS);
+    test_interleaved(array_func, 13, NUM_ELEMENTS);
+    test_interleaved(array_func, 14, NUM_ELEMENTS);
+    test_interleaved(array_func, 15, NUM_ELEMENTS);
+    test_interleaved(array_func, 16, NUM_ELEMENTS);
+
+    // the former is faster than the "same" version, because as we are reading and writing to/from the same address several iterations, the cpu can't pipeline instructions as efficiently (since each access is dependent on the previous).
+    test_unrolled_8(array_func, NUM_ELEMENTS)
+    test_unrolled_8(array_func, NUM_ELEMENTS)
+    test_unrolled_same_8(array_func, NUM_ELEMENTS)
+    test_unrolled_same_8(array_func, NUM_ELEMENTS)
+    // interestingly, doing less accesses, even within the same cache lines is still way lesse expensive, probably because of bound checking overhead? TODO: ask nbp!
+    test_unrolled_skip_8(array_func, NUM_ELEMENTS)
+    test_unrolled_skip_8(array_func, NUM_ELEMENTS)
+
+    //
+    test_unrolled_read_only(array_func, NUM_ELEMENTS);
+    test_unrolled_write_only(array_func, NUM_ELEMENTS);
+}
+
+println(" ----------------- Float32Array ------------ ");
+run_test_cases(f32_array);
+
+println(" ----------------- Float64Array ------------ ");
+run_test_cases(f64_array);
+
+println(" ----------------- JS Array (push)  ------------ ");
+run_test_cases(js_array);
+
+println(" ----------------- JS Array (increasing index)  ------------ ");
+run_test_cases(js_array2);
+
+//println(" ----------------- JS Array (decreasing index)  ------------ ");
+//run_test_cases(js_array3);
+
+
+</script>

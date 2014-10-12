@@ -1,0 +1,221 @@
+<pre>
+
+</pre>
+
+<script>
+
+// Renders a simple mesh with different orderings of indices.
+// the first index buffer tends to reuse indices that were
+// recently used, while the second index buffer is reordered
+// randomly.
+
+function println(msg) {
+    document.querySelector("pre").innerHTML += msg + "<br>";
+}
+
+function fill_buffers(vertices, indices, vertex_stride) {
+    var cursor = 0;
+    for (var w = 0; w < GRID_WIDTH; ++w) {
+        for (var h = 0; h < GRID_HEIGHT; ++h) {
+            var vertex_index = w*GRID_WIDTH+h;
+            vertices[vertex_index*vertex_stride]   = w / GRID_WIDTH;
+            vertices[vertex_index*vertex_stride+1] = h / GRID_HEIGHT;
+            vertices[vertex_index*vertex_stride+2] = 0;
+
+            indices[cursor++] = vertex_index;
+            indices[cursor++] = vertex_index+1;
+            indices[cursor++] = vertex_index+GRID_WIDTH;
+
+            indices[cursor++] = vertex_index+1;
+            indices[cursor++] = vertex_index+GRID_WIDTH;
+            indices[cursor++] = vertex_index+GRID_WIDTH+1;
+        }
+    }
+}
+
+function randomize_indices(indices, n) {
+    for (var i = 0; i < n; ++i) {
+        // Pick two triangles randomly (a triangle being 3 consecutive indices
+        // in the index buffer)...
+        var idx_1 = Math.floor(Math.random() * indices.length / 3)*3;
+        var idx_2 = Math.floor(Math.random() * indices.length / 3)*3;
+
+        // .. and swap them.
+        var t1 = indices[idx_1];
+        var t2 = indices[idx_1+1];
+        var t3 = indices[idx_1+2];
+
+        indices[idx_1]   = indices[idx_2];
+        indices[idx_1+1] = indices[idx_2+1];
+        indices[idx_1+2] = indices[idx_2+2];
+
+        indices[idx_2]   = t1;
+        indices[idx_2+1] = t2;
+        indices[idx_2+2] = t3;
+    }
+}
+
+function make_vbo(cpu_buffer, buf_type) {
+  var vbo = gl.createBuffer();
+  gl.bindBuffer(buf_type, vbo);
+  gl.bufferData(buf_type, cpu_buffer, gl.STATIC_DRAW);
+  return vbo;
+}
+
+function compile_shader(txt_src, type) {
+  var shader = gl.createShader(type);
+  gl.shaderSource(shader, txt_src);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.log("Shader compilation failed: "+gl.getShaderInfoLog(shader));
+  }
+  return shader;
+}
+
+function load_shader_program(vs, fs) {
+  var program = gl.createProgram();
+  gl.attachShader(program, compile_shader(vs, gl.VERTEX_SHADER));
+  gl.attachShader(program, compile_shader(fs, gl.FRAGMENT_SHADER));
+
+  gl.bindAttribLocation(program, 0, "a_position");
+  gl.bindAttribLocation(program, 1, "a_order");
+
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.log("Shader link failed: "+gl.getProgramInfoLog(program));
+  }
+  return program;
+}
+
+function draw(vbo, ibo, vertex_descriptor) {
+    for (var i = 0; i < vertex_descriptor.attribs.length; ++i) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+        gl.enableVertexAttribArray(vertex_descriptor.attribs[i].location);
+        gl.vertexAttribPointer(
+            vertex_descriptor.attribs[i].location,
+            vertex_descriptor.attribs[i].n_components,
+            gl.FLOAT,
+            false, 0, 0
+        );
+    }
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+    gl.drawElements(gl.TRIANGLES, vertex_descriptor.count, gl.UNSIGNED_SHORT, 0);
+}
+
+
+var canvas = document.createElement("canvas");
+document.body.appendChild(canvas);
+
+// render into a very small framebuffer to make sure that the
+// result aren't skewed by coherency while writing in the fbo.
+// it doesn't have any impact on the results.
+//canvas.width = 32;
+//canvas.height = 32;
+//canvas.innerWidth = 32;
+//canvas.innerHeight = 32;
+
+var gl = canvas.getContext("webgl");
+
+// We can play around with the number of vertices to see how it affects
+// cache pressure. The difference between linear and randomized indices
+// is more important with big meshes that smaller ones (which makes
+// sense because because with a small mesh you get a greater chance for
+// a vertex to still be in the cache even after ramdomization).
+var GRID_WIDTH = 1000;
+var GRID_HEIGHT = 1000;
+
+
+var vertex_shader_src =
+"attribute vec3 a_position;\n"+
+//"attribute float a_order;\n"+
+"uniform mat4 u_vp_mat;\n"+
+"uniform mat4 u_model_mat;\n"+
+//"varying float v_order;\n"+
+"void main() {\n"+
+"  gl_Position = u_vp_mat * u_model_mat * vec4(a_position, 1.0);\n"+
+//"  gl_Position = vec4(a_position, 1.0);\n"+
+//"  v_order = a_order;\n"+
+"}\n";
+
+var fragment_shader_src =
+"precision lowp float;\n"+
+//"varying float v_order;\n"+
+"void main() {\n"+
+//"  gl_FragColor = vec4(v_order, v_order, v_order, 1.0);\n"+
+"  gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);\n"+
+"}\n";
+
+gl.viewport(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+var vertices = new Float32Array(GRID_WIDTH*GRID_HEIGHT*3);
+//var orders = new Float32Array(vertices.length);
+var indices = new Uint16Array(GRID_WIDTH*GRID_HEIGHT*6);
+fill_buffers(vertices, indices, 3);
+
+var vertex_descriptor = {
+    count: GRID_WIDTH*GRID_HEIGHT*6,
+    attribs: [
+        { name: "a_position", location: 0, n_components: 3 },
+        //{ name: "a_order", location: 1, n_components: 1 },
+    ],
+}
+var vbo = make_vbo(vertices, gl.ARRAY_BUFFER);
+var ibo = make_vbo(indices, gl.ELEMENT_ARRAY_BUFFER);
+randomize_indices(indices, 1000000);
+var ibo_rand = make_vbo(indices, gl.ELEMENT_ARRAY_BUFFER);
+
+shader = load_shader_program(vertex_shader_src, fragment_shader_src);
+gl.useProgram(shader);
+gl.uniformMatrix4fv(gl.getUniformLocation(shader, "u_model_mat"),
+    false, new Float32Array([
+    1.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 1.0
+]));
+gl.uniformMatrix4fv(gl.getUniformLocation(shader, "u_vp_mat"),
+    false, new Float32Array([
+    1.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 1.0
+]));
+
+gl.clearColor(1.0, 0.0, 0.0, 1.0);
+gl.clear(gl.COLOR_BUFFER_BIT);
+
+
+var N_RUNS = 1000;
+
+// shader warmup
+draw(vbo, ibo, vertex_descriptor, shader);
+gl.finish();
+
+// cache friendly
+var start_time = Date.now();
+for (var i = 0; i < N_RUNS; ++i) {
+
+    draw(vbo, ibo, vertex_descriptor, shader);
+    gl.finish();
+
+}
+
+var linear = Date.now() - start_time;
+println("linear indices: " + linear);
+
+// cache unfriendly!
+start_time = Date.now();
+for (var i = 0; i < N_RUNS; ++i) {
+
+    draw(vbo, ibo_rand, vertex_descriptor, shader);
+    gl.finish();
+
+}
+
+var randomized = Date.now() - start_time;
+println("randomized indices: " + randomized);
+
+println("ratio: " + (linear/randomized));
+
+
+</script>

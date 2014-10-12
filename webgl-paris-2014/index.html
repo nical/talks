@@ -1,0 +1,484 @@
+<!DOCTYPE HTML>
+<!-- <html lang="en-US"> -->
+<html lang="en-US" class="fade">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Memory locality and JS performance</title>
+  <meta name="viewport" content="width=device-width, user-scalable=yes">
+  <link rel="stylesheet" href="themes/mozilla/styles/style.css">
+</head>
+<body class="list">
+  <header class="caption">
+    <h1>Memory locality and JS performance</h1>
+    <p class="footer">
+      Nicolas Silva, 
+      <a href="http://twitter.com/">@nicalsilva</a>
+    </p>
+  </header>
+
+  <div id="cover" class="slide"><div>
+    <section>
+      <header>
+        <h2>Memory locality & JS performance</h2>
+      </header>
+      <img src="pictures/webgl1.png"
+           style="position:absolute; bottom:80px; right:22%; width:60%;">
+
+      <small class="byline">
+        Nicolas, Silva, WebGL Paris, 2014
+      </small>
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="writing-apps" class="slide"><div>
+    <section>
+      <header>
+        <h2>Before we get to the fun stuff</h2>
+      </header>
+
+      <ul class="inner">
+        <li class="active">Performance is a problem like any other</li>
+        <li>Don't fix what's not broken</li>
+        <li>I am about to talk about stuff that doesn't usually matter for most programs </li>
+        <li>But typically becomes a bug deal for some specific types of apps (graphics-heavy/interactive apps, games)</li>
+      </ul>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="particles" class="slide"><div>
+    <section>
+      <header>
+        <h2>Let's add particles to our game</h2>
+      </header>
+
+      <img src="pictures/particles.png"
+           style="position:absolute; bottom:15%; left:10%; width:80%;">
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="code" class="slide"><div>
+    <section>
+      <header>
+        <h2>What's wrong here?</h2>
+      </header>
+
+      <img src="pictures/code01.png"
+           style="position:absolute; bottom:15%; left:10%; width:80%;">
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div> 
+
+  <div id="the-answer-d" class="slide"><div>
+    <section>
+      <header>
+        <h2>What's wrong here?</h2>
+      </header>
+
+      <ul>
+        <li>(A) lots of arithmetic operations</li>
+        <li>(B) JS is interpreted and therefore it is slow</li>
+        <li>(C) The memory access patterns</li>
+        <li>(D) The answer D</li>
+      </ul>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="the-answer-c" class="slide"><div>
+    <section>
+      <header>
+        <h2>What's wrong here?</h2>
+      </header>
+
+      <ul>
+        <li><del>(A) lots of arithmetic operations</del>
+          <ul>
+            <li> No! This is *really* cheap.
+          </ul>
+        </li>
+        <li><del>(B) JS is interpreted and therefore it is slow</del>
+          <ul>
+            <li> No! This code is easy to optimize for the JIT
+          </ul>
+        </li>
+        <li><strong>(C) The memory access patterns</strong>
+          <ul>
+            <li> Yes, This!
+          </ul>
+        </li>
+        <li><del>(D) The answer D</del></li>
+      </ul>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="memory-is-slow" class="slide oneline"><div>
+    <section>
+      <header>
+        <h2>Accessing memory</h2>
+      </header>
+      <div style="position: absolute; bottom:20%; right: 15%;">
+        it's slow.
+      </div>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="js-and-memory" class="slide"><div>
+    <section>
+      <header>
+        <h2>Accessing memory</h2>
+      </header>
+
+      <ul>
+        <li>In JS, does it really matter?
+          <ul>
+            <li> Yes, for "processing" tasks like game physics or simulations</li>
+          </ul>
+        </li>
+        <li>What about WebGL?
+          <ul>
+            <li> Yes, memory accesses = big deal for the GPU</li>
+          </ul>
+        </li>
+      </ul>
+
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="js-and-memory-mgmt" class="slide"><div>
+    <section>
+      <header>
+        <h2>How much control do I have over memory in JS?</h2>
+      </header>
+
+      <ul>
+        <li>Generally, not much</li>
+        <li>Typed arrays</li>
+        <li>Know your target platform (aka, be nice to the JIT)</li>
+      </ul>
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="know-your-platform" class="slide"><div>
+    <section>
+      <header>
+        <h2>Know your platform</h2>
+      </header>
+
+      <ul>
+        <li>Optimizing for performance is full of surprises</li>
+        <li>Most JS VMs have differences but aren't fundamentally different
+          <ul>
+            <li> JIT compilers
+            <li> Type information
+            <li> Under the VM, the same platform: the CPU
+          </ul>
+        </li>
+      </ul>
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="cache" class="slide"><div>
+    <section>
+      <header>
+        <h2>Accessing memory - cpu cache</h2>
+      </header>
+
+      <img src="pictures/cpucache.png"
+           style="position:absolute; bottom:10%; left:25%; width:50%;">
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="worship-thy-cache" class="slide"><div>
+    <section>
+      <header>
+        <h2>Be nice to the CPU cache</h2>
+      </header>
+
+      <ul>
+        <li>Memory is placed in the cache in "blocks"
+        <li>CPUs are good at predicting regular access patterns.
+        <li>Group the data that you access together
+        <li>Avoid random access, favor linear access
+      </ul>
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="arrays" class="slide"><div>
+    <section>
+      <header>
+        <h2>JS Arrays in memory</h2>
+      </header>
+      <ul>
+        <li>Header pointing to a <strong>contiguous</strong> sequence of 64bit elements
+        <li>Sometimes small vectors (< ~12-16 elts) are inlined next to the header
+        <li>Typed arrays are somewhat similar (and typed \o/)
+      </ul>
+      <img src="pictures/arrays.png"
+           style="position:absolute; bottom:80px; right:22%; width:60%;">
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="objects" class="slide"><div>
+    <section>
+      <header>
+        <h2>JS Objects in memory (JIT)</h2>
+      </header>
+      <ul>
+        <li>Structure containing a the members and a reference to the "shape"
+        <li>The shape contains information such as the offset of members in the structure
+      </ul>
+      <img src="pictures/jit-objects.png"
+           style="position:absolute; bottom:80px; right:30%; width:40%;">
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="particle-objects" class="slide"><div>
+    <section>
+      <header>
+        <h2>Back to our particles</h2>
+      </header>
+      <ul>
+        <li> Lots of data scattered around memory :(
+      </ul>
+      <img src="pictures/array-obj-array.png"
+           style="position:absolute; bottom:10%; right:10%; width:80%;">
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="particle-packed" class="slide"><div>
+    <section>
+      <header>
+        <h2>Particles packed into arrays</h2>
+      </header>
+      <ul>
+        <li> No objects, <strong>just data</strong>
+        <li> Much faster than the previous slide
+        <li> separated or interleaved? depends on what you do with the data.
+      </ul>
+      <img src="pictures/packing.png"
+           style="position:absolute; bottom:10%; right:6%; width:88%;">
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="array-tips" class="slide"><div>
+    <section>
+      <header>
+        <h2>A few things aout arrays</h2>
+      </header>
+      <ul>
+        <li> Prefer typed arrays over [] for large arrays
+        <li> Currently, typed arrays are good for large amount of data but not for smaller quantities (don't store xyz vectors in their own Float32Array).
+        <li> Don't store different types in the same array
+        <li> Access the elements sequentially, in order
+      </ul>
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="random access" class="slide"><div>
+    <section>
+      <header>
+        <h2>To illustrate access patterns</h2>
+      </header>
+      <ul>
+        <li> Iterate over the indirection table to process particles.
+        <li> The first table is sorted while the second is shuffled.
+        <li> How much faster is the sorted table?
+      </ul>
+      <img src="pictures/indirect.png"
+           style="position:absolute; bottom:10%; right:6%; width:88%;">
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="and-webgl" class="slide oneline"><div>
+    <section>
+      <header>
+        <h2>And WebGL?</h2>
+      </header>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="webgl-api" class="slide"><div>
+    <section>
+      <header>
+        <h2>Memory access matters a lot to the GPU</h2>
+      </header>
+      <ul>
+        <li> Thankfully, GPU rendering APIs are designed to avoid poor object-oriented data representation
+        <li> Vertex data is batched into buffers of contiguous memory
+        <li> Textures are Tiled and swizzled to maximize cache locality in 2D
+      </ul>
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="swizzling" class="slide"><div>
+    <section>
+      <header>
+        <h2>Texture memory swizzling</h2>
+      </header>
+      <ul>
+        <li>Done by the GPU/driver internally
+        <li>Texture samples are coherent in 2D, not just within rows
+      </ul>
+      <img src="pictures/morton.png"
+           style="position:absolute; bottom:10%; right:10%; width:80%;">
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="swizzling2" class="slide"><div>
+    <section>
+      <header>
+        <h2>Texture memory swizzling</h2>
+      </header>
+      <img src="pictures/swizzling2.png"
+           style="position:absolute; bottom:10%; right:20%; width:60%;">
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="swizzling3" class="slide"><div>
+    <section>
+      <header>
+        <h2>Texture memory swizzling</h2>
+      </header>
+      <img src="pictures/tex-locality.png"
+           style="position:absolute; bottom:10%; right:10%; width:80%;">
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="mipmapping" class="slide"><div>
+    <section>
+      <header>
+        <h2>Mip mapping</h2>
+      </header>
+      <ul>
+        <li>Precompute smaller versions of the texture.
+        <li>Improves the likelyhood that neighboring on screen pixels will fetch from neighboring texels.
+        <li>More of the texture fits in the cache for small/far objects.
+      </ul>
+      <img src="pictures/mipmaps.png"
+           style="position:absolute; bottom:10%; right:20%; width:60%;">
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="vbo" class="slide"><div>
+    <section>
+      <header>
+        <h2>Vertex buffer objects</h2>
+      </header>
+      <ul>
+        <li>The way vertices are packed into VBOs affect performance the same way it affects performance on the CPU.
+        <li>The GPU can cache the result of the vertex shader and avoid recomputing an index that comes several times if the result is still in the cache.
+        <li> Prefer grouping vertex attributes into the same vbo.
+        <li> Keep attributes that change often (if any) in a separate vbo.
+      </ul>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="shaders" class="slide"><div>
+    <section>
+      <header>
+        <h2>Shaders</h2>
+      </header>
+      <ul>
+        <li> Don't  forget that they run a LOT of times per frame!
+        <li> It's great when the entire shader fits in the instruction cache.
+        <li> Otherwise, loads of cache-misses as the shader is run many times.
+      </ul>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="conclusion" class="slide"><div>
+    <section>
+      <header>
+        <h2>a few notes about all this</h2>
+      </header>
+      <ul>
+        <li> As JIT compilers improve and the generated code becomes closer to what one can write in C++, cache effects will become more and more important.
+        <li> Currently there is still some VM overhead which hides cache latency in some cases.
+        <li> Moving garbage collectors have the potential to automatically keep hot data together, to some extent.
+        <li> Embrace data-oriented design.
+      </ul>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="thanks" class="slide"><div>
+    <section>
+      <header>
+        <h2>Thanks</h2>
+      </header>
+
+      <small class="byline">
+        Nicolas, Silva, WebGL Paris, 2014
+      </small>
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="refs" class="slide"><div>
+    <section>
+      <header>
+        <h2>A few links</h2>
+      </header>
+      <ul>
+        <li>Slides: <a href="nical.github.com/talks/webgl-paris-2014">
+          nical.github.com/talks/webgl-paris-2014 </a>
+        <li>Some micro benchmarks: <a href="github.com/nical/talks/webgl-paris-2014/bench">
+          nical.github.com/talks/webgl-paris-2014 </a>
+        <li><a href="http://home.comcast.net/~tom_forsyth/papers/fast_vert_cache_opt.html"> Linear speed vertex cache optimization (paper)</a>
+
+      </ul>
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div class="progress"><div></div></div>
+  <script src="scripts/script.js"></script>
+  <!-- Copyright © 2010–2012 Vadim Makeev — pepelsbey.net -->
+</body>
+</html>

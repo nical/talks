@@ -1,0 +1,280 @@
+
+<pre>
+
+</pre>
+
+<script>
+
+var NUM_RUNS = 10000;
+
+function println(msg) {
+    document.querySelector("pre").innerHTML += msg + "<br>";
+}
+
+function js_array_vec3() { return [0.0, 0.0, 0.0]; }
+function f64_array_vec3() {
+    return new Float64Array(3);
+}
+
+function f64_array(size) { return new Float64Array(size); }
+function js_array(size) {
+    var array = [];
+    for (var i = 0; i < size; ++i) {
+        array.push(0.0);
+    }
+    return array;
+}
+
+function indirect(array_func, vec_func, num_elements) {
+    var pos_array = [];
+    var vel_array = [];
+
+    for (i = 0; i < num_elements; ++i) {
+        pos_array.push(vec_func());
+        vel_array.push(vec_func());
+    }
+
+    var start_time = Date.now();
+
+    for (var r=0; r < NUM_RUNS; ++r) {
+        for (var i = 0; i < num_elements; ++i) {
+            pos_array[i][0] += vel_array[i][0];
+            pos_array[i][1] += vel_array[i][1];
+            pos_array[i][2] += vel_array[i][2];
+        }
+    }
+
+    var end_time = Date.now();
+
+    println("indirect vec3+=vec3: " + (end_time - start_time));
+}
+
+function obj_indirect(array_func, vec_func, num_elements) {
+    var obj_array = [];
+
+    for (i = 0; i < num_elements; ++i) {
+        obj_array[i] = {
+            pos: vec_func(),
+            vel: vec_func(),
+            health: 100.0,
+            strength: 10.0,
+            toughness: 10.0,
+            inteligence: 10.0,
+            name: "john"
+        };
+    }
+
+    var start_time = Date.now();
+
+    for (var r=0; r < NUM_RUNS; ++r) {
+        for (var i = 0; i < num_elements; ++i) {
+            obj_array[i].pos[0] += obj_array[i].vel[0];
+            obj_array[i].pos[1] += obj_array[i].vel[1];
+            obj_array[i].pos[2] += obj_array[i].vel[2];
+        }
+    }
+
+    var end_time = Date.now();
+
+    println("obj indirect vec3+=vec3: " + (end_time - start_time));
+}
+
+function obj_indirect_out_of_order(array_func, vec_func, num_elements) {
+    var obj_array = [];
+    var garbage = [];
+    // alternating allocations this way better simulates the fact that not all
+    // objects are allocated in the order the appear in the array or that other
+    // allocations may have happened in the meantime (and make it less likely
+    // to hit the sweet spot where all allocated objects end up near
+    // one another in memory).
+    // the perf difference is small (like, 186 vs 177 for 12000 elemens and 1000 runs)
+    for (var j = 0; j < 4; ++j) {
+        for (var i = 0; i < num_elements/4; ++i) {
+            obj_array[i*4+j] = {
+                pos: vec_func(),
+                vel: vec_func(),
+                health: 100.0,
+                strength: 10.0,
+                toughness: 10.0,
+                inteligence: 10.0,
+                name: "john"
+            };
+        }
+    }
+     
+    for (var i = 0; i < num_elements/4; ++i) {
+        obj_array[i*4] = {
+            pos: vec_func(),
+            vel: vec_func(),
+            health: 100.0,
+            strength: 10.0,
+            toughness: 10.0,
+            inteligence: 10.0
+            // this one doesn't have a name
+        };
+    }
+
+    // adding a member to some of them doesn seem to make a difference
+    //for (var i = 0; i < num_elements/4; ++i) {
+    //    obj_array[i*4].bonus = 42;
+    //}
+
+    var start_time = Date.now();
+
+    for (var r=0; r < NUM_RUNS; ++r) {
+        for (var i = 0; i < num_elements; ++i) {
+            obj_array[i].pos[0] += obj_array[i].vel[0];
+            obj_array[i].pos[1] += obj_array[i].vel[1];
+            obj_array[i].pos[2] += obj_array[i].vel[2];
+        }
+    }
+
+    var end_time = Date.now();
+
+    println("obj indirect vec3+=vec3: " + (end_time - start_time));
+}
+
+function packed(array_func, num_elements) {
+    var array_size = (num_elements*3)|0;
+    var array = array_func(array_size);
+
+    var start_time = Date.now();
+
+    for (var r=0; r < NUM_RUNS; ++r) {
+        for (var i=0; i < array_size; i+=3) {
+            array[i+0] += array[i+3];
+            array[i+1] += array[i+4];
+            array[i+2] += array[i+5];
+        }
+    }
+
+    var end_time = Date.now();
+
+    println("packed Float64Array px,py,pz,vx,vy,vz..." + (end_time - start_time));
+}
+
+function packed_interleaved(array_func, num_elements) {
+    var array_size = (num_elements*3)|0;
+    var array = array_func(array_size);
+
+    var start_time = Date.now();
+
+    for (var r=0; r < NUM_RUNS; ++r) {
+        for (var i=0; i < array_size; i+=4) {
+            array[i+0] += array[i+4];
+            array[i+1] += array[i+5];
+            array[i+2] += array[i+6];
+            array[i+3] += array[i+7];
+        }
+    }
+
+    var end_time = Date.now();
+
+    println("packed & interleaved 4 by 4: " + (end_time - start_time));
+}
+
+function indexed_linear(array_func, num_elements) {
+    var array_size = (num_elements*6);
+    var array = array_func(array_size);
+
+    var indices = [];
+    // sequential indices
+    for (var i = 0; i < num_elements; ++i) {
+        indices.push(i*6);
+    }
+
+    var start_time = Date.now();
+
+    for (var r = 0; r < NUM_RUNS; ++r) {
+        for (var i = 0; i < num_elements; ++i) {
+            var index = indices[i];
+            array[index+0] += array[index+3];
+            array[index+1] += array[index+4];
+            array[index+2] += array[index+5];
+        }
+    }
+
+    var end_time = Date.now();
+
+    println("indexed linear: " + (end_time - start_time));
+}
+
+function indexed_random(array_func, num_elements) {
+    var array_size = (num_elements*6);
+    var array = array_func(array_size);
+
+    var indices = [];
+    for (var i = 0; i < num_elements; ++i) {
+        indices.push(i*6);
+    }
+    // randomly swap indices
+    for (var i = 0; i < num_elements*10; ++i) {
+        var idx_1 = Math.floor(Math.random() * indices.length);
+        var idx_2 = Math.floor(Math.random() * indices.length);
+        var tmp = indices[idx_1];
+        indices[idx_1] = indices[idx_2];
+        indices[idx_2] = tmp;
+    }
+
+    var start_time = Date.now();
+
+    for (var r = 0; r < NUM_RUNS; ++r) {
+        for (var i = 0; i < num_elements; ++i) {
+            var index = indices[i];
+            array[index+0] += array[index+3];
+            array[index+1] += array[index+4];
+            array[index+2] += array[index+5];
+        }
+    }
+
+    var end_time = Date.now();
+
+    println("indexed random: " + (end_time - start_time));
+}
+
+
+// it is preferable to use a multiple of 4 otherwise packed_interleaved
+// will do more works than the other tests
+var NUM_ELEMENTS = 120000;
+
+function run_tests() {
+/*
+    println(" ----------------- js array of [] vectors ------------ ");
+    indirect(js_array, js_array_vec3, NUM_ELEMENTS);
+
+    println(" ----------------- js array of Float64Array vectors ------------ ");
+    // using lots of small typed arrays appears to be incrdibly slow.
+    // TODO: why?
+    indirect(js_array, f64_array_vec3, NUM_ELEMENTS);
+
+    println(" ----------------- js array of objects containing [] vectors ------------ ");
+    obj_indirect(js_array, js_array_vec3, NUM_ELEMENTS);
+
+    println(" ----------------- js array of objects containing [] vectors (out of order init) ------------ ");
+    obj_indirect_out_of_order(js_array, js_array_vec3, NUM_ELEMENTS);
+
+    // using lots of small typed arrays appears to be incrdibly slow.
+    println(" ----------------- js array of objects containing Float64Array vectors ------------ ");
+    obj_indirect(js_array, f64_array_vec3, NUM_ELEMENTS);
+    
+    println(" ----------------- packed typed array ------------ ");
+    packed(f64_array, NUM_ELEMENTS);
+    packed_interleaved(f64_array, NUM_ELEMENTS);
+*/
+    println(" ----------------- indexed typed array ------------ ");
+    indexed_linear(f64_array, NUM_ELEMENTS);
+    indexed_random(f64_array, NUM_ELEMENTS);
+}
+
+run_tests();
+
+
+/*
+
+valeurs dans les tableaux font toujours 64bit dans gecko, v8 stocke uniquement des pointeurs, (y compris pointeurs pointeurs sur double, quand ils optimisent ils creent un tableau contentant que des doubles.).
+
+moins de 12 ou 16 (?) elt dans un tableau js -> inline les valeurs dans l'objet
+
+*/
+
+</script>
