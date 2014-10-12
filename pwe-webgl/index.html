@@ -1,0 +1,310 @@
+<!DOCTYPE HTML>
+<!-- <html lang="en-US"> -->
+<html lang="en-US" class="fade">
+<!-- 
+  ^ a class of "fade" makes slides fade smoothly into one another
+ -->
+<!-- <html lang="en-US" class="nonumbers"> -->
+<!-- 
+  If you want no numbers on the slides add a "nonumbers" class 
+  to the HTML element.
+  Adding a class of "fade" will make slides fade into another. 
+-->
+<head>
+  <meta charset="UTF-8">
+  <title>WebGL</title>
+<!-- 
+  If you upload your slides to the web, ensure that you have 
+  a good title - this shows up in search results and social
+  media links
+ -->
+  <meta name="viewport" content="width=device-width, user-scalable=yes">
+  <link rel="stylesheet" href="themes/mozilla/styles/style.css">
+</head>
+<body class="list">
+  <header class="caption">
+    <h1>De la 3D dans le web</h1>
+    <p class="footer">
+      Nicolas Silva,
+      <a href="http://twitter.com/nicalsilva">@nicalsilva</a> &amp;&amp;
+      <a href="mailto:nical@mozilla.com">nical@mozilla.com</a>
+    </p>
+  </header>
+  <aside class="talkdescription">
+    <p>
+      This slide deck is using the shower system - roll over the previews to
+      see the notes and click any slide to go into presentation mode. Then use
+      keys to navigate. <button onclick="goFullScreen()">Go
+      fullscreen</button>
+    </p>
+    <p class="abstract">
+    <strong>Abstract: </strong>
+    Le web tel qu'on le connaît aujourd'hui est bien différent de la plateforme  de présentation de documents qu'il était à ses débuts. Le Web est aujourd'hui une plateforme applicative riche. WebGL permet aux développeurs d'applications web de tirer partie des capacités du hardware pour générer du contenu graphique avancé et ouvre la porte à de nombreux types de contenus et de services avancés et innovants.
+    </p>
+  </aside>
+
+  <div id="cover" class="slide"><div>
+    <section>
+      <header>
+      <h2>WebGL - La 3D dans le Web</h2>
+        <h3 style="font-size: 0.5em; text-align: right;"></h3>
+      </header>
+      <img src="pictures/firefox_logo-only_RGB.png"
+           class="middle" height="400">
+      <small class="byline">
+        Nicolas Silva, Mozilla Corporation, Paris, 19-06-2014
+      </small>
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="leweb" class="slide oneline"><div>
+    <section>
+      <header>
+        <h2>Le Web</h2>
+      </header>
+    </section>
+  </div></div>
+
+  <div id="alalouche" class="slide"><div>
+    <section>
+      <header>
+        <h2>WebGL - Dans les grands lignes...</h2>
+      </header>
+      <p>
+        WebGL est une API JavaScript, permettant aux dévelopeurs web d'accéder aux fonctionalités les plus répandues des cartes graphiques d'aujourd'hui.
+      </p>
+      <a class="right" href="https://www.khronos.org/webgl/">
+        https://www.khronos.org/webgl</a>
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="webgl" class="slide"><div>
+    <section>
+      <header>
+        <h2>WebGL</h2>
+      </header>
+
+        <ul>
+            <li> Une abstraction bas niveau... (performances, flexibilité)
+            <li> Permet d'afficher du contenu 3D
+            <li> ... et 2D !
+            <li> Un standard en évolution
+        </ul>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="plateformes" class="slide"><div>
+    <section>
+      <header>
+        <h2>Disponible sur les plateformes majeures</h2>
+      </header>
+
+        <img alt="" src="pictures/plateformes.png"
+            style="position:absolute; bottom:10%; right:0%; width:100%;">
+        </img>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="epic" class="slide"><div>
+    <section>
+      <header>
+        <h2>Monster Madness (<a href="http://www.youtube.com/watch?v=c2uNDlP4RiE">Unreal engine</a>)</h2>
+      </header>
+
+        <img alt="" src="pictures/monstermadness.jpg"
+            style="position:absolute; bottom:0px; right:5%; width:90%;">
+        </img>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="sketchfab" class="slide"><div>
+    <section>
+      <header>
+        <h2>Sketchfab</h2>
+      </header>
+
+        <img alt="" src="pictures/sketchfab.png"
+            style="position:absolute; bottom:0px; right:0%; width:100%;">
+        </img>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="sketchfab-embed" class="slide"><div>
+    <section>
+
+<iframe width="100%" height="100%" frameborder="0" allowFullScreen webkitallowfullscreen mozallowfullscreen src="https://sketchfab.com/models/baa514937f7349398487552f48e96b23/embed"></iframe>
+
+<p style="font-size: 13px; font-weight: normal; margin: 5px; color: #4A4A4A;">
+    <a href="https://sketchfab.com/models/baa514937f7349398487552f48e96b23" style="font-weight: bold; color: #1CAAD9;">gyunyu wo sosogu onna / Het melkmeisje</a>
+    by <a href="https://sketchfab.com/sid2941" style="font-weight: bold; color: #1CAAD9;">Kou-c30</a>
+    on <a href="https://sketchfab.com" style="font-weight: bold; color: #1CAAD9;">Sketchfab</a>
+</p>
+
+    </div></div>
+
+  <div id="verold" class="slide"><div>
+    <section>
+      <header>
+        <h2>Verold</h2>
+      </header>
+
+        <img alt="" src="pictures/verold.png"
+            style="position:absolute; bottom:0px; right:5%; width:90%;">
+        </img>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="maps" class="slide"><div>
+    <section>
+      <header>
+        <h2>Google maps</h2>
+      </header>
+
+        <img alt="" src="pictures/googlemaps.png"
+            style="position:absolute; bottom:10%; right:0%; width:100%;">
+        </img>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="vizcities" class="slide"><div>
+    <section>
+      <header>
+        <h2>VizCities</h2>
+      </header>
+
+        <img alt="" src="pictures/cityviz.jpg"
+            style="position:absolute; bottom:0px; right:5%; width:90%;">
+        </img>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="dataviz" class="slide"><div>
+    <section>
+      <header>
+        <h2>Data visualization (Sencha Labs)</h2>
+      </header>
+
+        <img alt="" src="pictures/sencha-flights.png"
+            style="position:absolute; bottom:0px; right:5%; width:90%;">
+        </img>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="ad" class="slide"><div>
+    <section>
+      <header>
+        <h2>Advertizement that does not suck</h2>
+      </header>
+        <a href="http://gravitymovie.warnerbros.com/">
+            <img alt="" src="pictures/gravity.png"
+                style="position:absolute; bottom:0px; right:0%; width:100%;">
+            </img>
+        </a>
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="musique" class="slide"><div>
+    <section>
+      <header>
+        <h2>Musique Ellie Goulding - Lights</h2>
+      </header>
+        <a href="http://lights.helloenjoy.com/">
+            <img alt="" src="pictures/lights.jpg"
+                style="position:absolute; bottom:0px; right:0%; width:100%;">
+            </img>
+        </a>
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="links" class="slide"><div>
+    <section>
+      <header>
+        <h2> Quelques liens </h2>
+      </header>
+      <ul>
+        <li> <a href="https://sketchfab.com"> Sketchfab </a> </li>
+        <li> <a href="http://verold.com/"> Verold </a> </li>
+        <li> <a href="https://www.unrealengine.com/"> Unreal Engine </a> (<a href="http://www.youtube.com/watch?v=c2uNDlP4RiE"> demo</a>) </li>
+        <li> <a href="http://www.monstermadness.com/"> Monster Madness</a></li>
+        <li> <a href="http://unity3d.com/"> Unity </a> </li>
+        <li> <a href="http://vizicities.com/"> VizCities </a></li>
+        <li> <a href="https://maps.google.com">Google Maps</a> </li>
+        <li> <a href="http://www.senchalabs.org/philogl/"> Sencha Labs (PhiloGL demos) </a> </li>
+        <li> <a href="http://gravitymovie.warnerbros.com/"> Gravity (WebGL trailer) </a> </li>
+        <li> <a href="http://lights.helloenjoy.com/"> Ellie Goulding - Lights (WebGL demo) </a></li>
+
+      </ul>
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="questions" class="slide oneline"><div>
+    <section>
+      <header>
+        <h2> Questions ?</h2>
+      </header>
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="ciao" class="slide"><div>
+    <section>
+      <header>
+        <h2>Contact</h2>
+      </header>
+      <ul class="">
+        <li><strong>Nicolas Silva</strong></li>
+        <li><a href="mailto=nical@mozilla.com">nical@mozilla.com</a></li>
+        <li><a href="http://twitter.com/nicalsilva">@nicalsilva</a> on Twitter</li>
+        <li><a href="irc://irc.mozilla.org#gfx">#gfx on irc.mozilla.org</a></li>
+      </ul>
+
+    <footer class="notes">
+    </footer>
+
+    </section>
+  </div></div>
+
+  <!--
+    To hide progress bar from entire presentation
+    just remove “progress” element.
+    -->
+  <div class="progress"><div></div></div>
+  <script src="scripts/script.js"></script>
+  <!-- Copyright © 2010–2012 Vadim Makeev — pepelsbey.net -->
+</body>
+</html>
