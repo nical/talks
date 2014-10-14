@@ -26,7 +26,7 @@
            style="position:absolute; bottom:80px; right:22%; width:60%;">
 
       <small class="byline">
-        Nicolas, Silva, WebGL Paris, 2014
+        Nicolas Silva, WebGL Paris, 2014
       </small>
       <footer class="notes">
       </footer>
@@ -39,9 +39,9 @@
         <h2>Before we get to the fun stuff</h2>
       </header>
 
-      <ul class="inner">
-        <li>I am about to talk about stuff that doesn't usually matter for most programs
-        <li>but typically becomes a big deal for some specific types of apps (graphics-heavy/interactive apps, games)
+      <ul>
+        <li>I am about to talk about stuff that doesn't usually matter to most programs
+        <li>but typically becomes a big deal for some specific types of apps (graphics-heavy/interactive apps, games).
         <li>Don't fix what's not broken!
       </ul>
       <footer class="notes"></footer>
@@ -293,7 +293,7 @@
       </header>
       <ul>
         <li> Prefer typed arrays over [] for large arrays
-        <li> Currently, typed arrays are good for large amount of data but not for smaller quantities (don't store many small xyz vectors in their own Float32Arrays).
+        <li> Currently, typed arrays are good for large amounts of data but not for smaller quantities (don't store many small xyz vectors in their own Float32Arrays).
         <li> Don't store different types in the same array
         <li> Access the elements sequentially, in order
       </ul>
@@ -334,9 +334,9 @@
         <h2>Memory access matters a lot to the GPU</h2>
       </header>
       <ul>
-        <li> Thankfully, GPU rendering APIs are designed to avoid poor object-oriented data representation
-        <li> Vertex data is batched into buffers of contiguous memory
-        <li> Textures are Tiled and swizzled to maximize cache locality in 2D
+        <li> Thankfully, GPU rendering APIs are designed to avoid poor object-oriented data representation.
+        <li> Vertex data is batched into buffers of contiguous memory.
+        <li> Textures are Tiled and swizzled to maximize cache locality in 2D.
       </ul>
 
       <footer class="notes"></footer>
@@ -349,8 +349,8 @@
         <h2>Texture memory swizzling</h2>
       </header>
       <ul>
-        <li>Done by the GPU/driver internally
-        <li>Texture samples are coherent in 2D, not just within rows
+        <li>Done by the GPU/driver internally.
+        <li>Texture samples are coherent in 2D, not just within rows.
       </ul>
       <img src="pictures/morton.png"
            style="position:absolute; bottom:10%; right:10%; width:80%;">
@@ -457,11 +457,10 @@
         <li>A few <a href="https://github.com/nical/talks/tree/master/webgl-paris-2014/bench">micro benchmarks</a>
         <li><a href="http://lwn.net/Articles/250967/"> What every programmer should know about memory</a>
         <li><a href="http://home.comcast.net/~tom_forsyth/papers/fast_vert_cache_opt.html"> Linear speed vertex cache optimization (paper)</a>
-
       </ul>
 
       <small class="byline">
-        Nicolas, Silva, WebGL Paris, 2014
+        Nicolas Silva, WebGL Paris, 2014
       </small>
       <footer class="notes">
       </footer>
