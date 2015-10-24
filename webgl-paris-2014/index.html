@@ -20,13 +20,13 @@
   <div id="cover" class="slide"><div>
     <section>
       <header>
-        <h2>Memory locality & JS performance</h2>
+        <h2>Memory locality and JS performance</h2>
       </header>
       <img src="pictures/webgl1.png"
            style="position:absolute; bottom:80px; right:22%; width:60%;">
 
       <small class="byline">
-        Nicolas, Silva, WebGL Paris, 2014
+        Nicolas Silva, WebGL Paris, 2014
       </small>
       <footer class="notes">
       </footer>
@@ -39,11 +39,10 @@
         <h2>Before we get to the fun stuff</h2>
       </header>
 
-      <ul class="inner">
-        <li class="active">Performance is a problem like any other</li>
-        <li>Don't fix what's not broken</li>
-        <li>I am about to talk about stuff that doesn't usually matter for most programs </li>
-        <li>But typically becomes a bug deal for some specific types of apps (graphics-heavy/interactive apps, games)</li>
+      <ul>
+        <li>I am about to talk about stuff that doesn't usually matter to most programs
+        <li>but typically becomes a big deal for some specific types of apps (graphics-heavy/interactive apps, games).
+        <li>Don't fix what's not broken!
       </ul>
       <footer class="notes"></footer>
     </section>
@@ -164,7 +163,7 @@
       <ul>
         <li>Generally, not much</li>
         <li>Typed arrays</li>
-        <li>Know your target platform (aka, be nice to the JIT)</li>
+        <li>Know your target platform (and be nice to the JIT)</li>
       </ul>
 
       <footer class="notes"></footer>
@@ -183,7 +182,7 @@
           <ul>
             <li> JIT compilers
             <li> Type information
-            <li> Under the VM, the same platform: the CPU
+            <li> Under the VM, the same platform: the CPU.
           </ul>
         </li>
       </ul>
@@ -212,10 +211,10 @@
       </header>
 
       <ul>
-        <li>Memory is placed in the cache in "blocks"
-        <li>CPUs are good at predicting regular access patterns.
-        <li>Group the data that you access together
-        <li>Avoid random access, favor linear access
+        <li>Memory is placed in the cache in "blocks".
+        <li>CPUs are good at predicting regular access patterns, and prefetching data ahead of time.
+        <li>Group the data that you access together.
+        <li>Avoid random access, favor linear access.
       </ul>
 
       <footer class="notes"></footer>
@@ -228,9 +227,9 @@
         <h2>JS Arrays in memory</h2>
       </header>
       <ul>
-        <li>Header pointing to a <strong>contiguous</strong> sequence of 64bit elements
-        <li>Sometimes small vectors (< ~12-16 elts) are inlined next to the header
-        <li>Typed arrays are somewhat similar (and typed \o/)
+        <li>Header pointing to a <strong>contiguous</strong> sequence of 64bit elements.
+        <li>Sometimes small vectors (< ~12-16 elts) are inlined next to the header.
+        <li>Typed arrays are somewhat similar (and typed \o/).
       </ul>
       <img src="pictures/arrays.png"
            style="position:absolute; bottom:80px; right:22%; width:60%;">
@@ -245,8 +244,8 @@
         <h2>JS Objects in memory (JIT)</h2>
       </header>
       <ul>
-        <li>Structure containing a the members and a reference to the "shape"
-        <li>The shape contains information such as the offset of members in the structure
+        <li>Structure containing a the members and a reference to the "shape".
+        <li>The shape contains information such as the offset of members in the structure.
       </ul>
       <img src="pictures/jit-objects.png"
            style="position:absolute; bottom:80px; right:30%; width:40%;">
@@ -276,9 +275,9 @@
         <h2>Particles packed into arrays</h2>
       </header>
       <ul>
-        <li> No objects, <strong>just data</strong>
-        <li> Much faster than the previous slide
-        <li> separated or interleaved? depends on what you do with the data.
+        <li> No objects, <strong>just data</strong>.
+        <li> Much faster than the previous slide.
+        <li> Separated or interleaved? depends on what you do with the data.
       </ul>
       <img src="pictures/packing.png"
            style="position:absolute; bottom:10%; right:6%; width:88%;">
@@ -294,7 +293,7 @@
       </header>
       <ul>
         <li> Prefer typed arrays over [] for large arrays
-        <li> Currently, typed arrays are good for large amount of data but not for smaller quantities (don't store xyz vectors in their own Float32Array).
+        <li> Currently, typed arrays are good for large amounts of data but not for smaller quantities (don't store many small xyz vectors in their own Float32Arrays).
         <li> Don't store different types in the same array
         <li> Access the elements sequentially, in order
       </ul>
@@ -335,9 +334,9 @@
         <h2>Memory access matters a lot to the GPU</h2>
       </header>
       <ul>
-        <li> Thankfully, GPU rendering APIs are designed to avoid poor object-oriented data representation
-        <li> Vertex data is batched into buffers of contiguous memory
-        <li> Textures are Tiled and swizzled to maximize cache locality in 2D
+        <li> Thankfully, GPU rendering APIs are designed to avoid poor object-oriented data representation.
+        <li> Vertex data is batched into buffers of contiguous memory.
+        <li> Textures are Tiled and swizzled to maximize cache locality in 2D.
       </ul>
 
       <footer class="notes"></footer>
@@ -350,8 +349,8 @@
         <h2>Texture memory swizzling</h2>
       </header>
       <ul>
-        <li>Done by the GPU/driver internally
-        <li>Texture samples are coherent in 2D, not just within rows
+        <li>Done by the GPU/driver internally.
+        <li>Texture samples are coherent in 2D, not just within rows.
       </ul>
       <img src="pictures/morton.png"
            style="position:absolute; bottom:10%; right:10%; width:80%;">
@@ -395,7 +394,7 @@
         <li>More of the texture fits in the cache for small/far objects.
       </ul>
       <img src="pictures/mipmaps.png"
-           style="position:absolute; bottom:10%; right:20%; width:60%;">
+           style="position:absolute; bottom:10%; right:30%; width:40%;">
 
       <footer class="notes"></footer>
     </section>
@@ -433,7 +432,7 @@
   <div id="conclusion" class="slide"><div>
     <section>
       <header>
-        <h2>a few notes about all this</h2>
+        <h2>a few closing notes</h2>
       </header>
       <ul>
         <li> As JIT compilers improve and the generated code becomes closer to what one can write in C++, cache effects will become more and more important.
@@ -451,33 +450,24 @@
         <h2>Thanks</h2>
       </header>
 
+      A few links: <br><br><br>
+      <ul>
+        <li>Slides: <a href="nical.github.com/talks/webgl-paris-2014">
+          nical.github.com/talks/webgl-paris-2014 </a>
+        <li>A few <a href="https://github.com/nical/talks/tree/master/webgl-paris-2014/bench">micro benchmarks</a>
+        <li><a href="http://lwn.net/Articles/250967/"> What every programmer should know about memory</a>
+        <li><a href="http://home.comcast.net/~tom_forsyth/papers/fast_vert_cache_opt.html"> Linear speed vertex cache optimization (paper)</a>
+      </ul>
+
       <small class="byline">
-        Nicolas, Silva, WebGL Paris, 2014
+        Nicolas Silva, WebGL Paris, 2014
       </small>
       <footer class="notes">
       </footer>
     </section>
   </div></div>
 
-  <div id="refs" class="slide"><div>
-    <section>
-      <header>
-        <h2>A few links</h2>
-      </header>
-      <ul>
-        <li>Slides: <a href="nical.github.com/talks/webgl-paris-2014">
-          nical.github.com/talks/webgl-paris-2014 </a>
-        <li>Some micro benchmarks: <a href="github.com/nical/talks/webgl-paris-2014/bench">
-          nical.github.com/talks/webgl-paris-2014 </a>
-        <li><a href="http://home.comcast.net/~tom_forsyth/papers/fast_vert_cache_opt.html"> Linear speed vertex cache optimization (paper)</a>
-
-      </ul>
-      <footer class="notes">
-      </footer>
-    </section>
-  </div></div>
-
-  <div class="progress"><div></div></div>
+ <div class="progress"><div></div></div>
   <script src="scripts/script.js"></script>
   <!-- Copyright © 2010–2012 Vadim Makeev — pepelsbey.net -->
 </body>
