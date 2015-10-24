@@ -6,6 +6,7 @@
 <script>
 
 var NUM_RUNS = 10000;
+var NUM_ELEMENTS = 100000;
 
 function println(msg) {
     document.querySelector("pre").innerHTML += msg + "<br>";
@@ -16,6 +17,16 @@ function f64_array_vec3() {
     return new Float64Array(3);
 }
 
+var array_buffer_alloc = new ArrayBuffer(NUM_ELEMENTS*3*2*8)
+var bump_ptr = 0;
+function f64_array_view() {
+    var arr = new Float64Array(array_buffer_alloc, bump_ptr, 3);
+    bump_ptr += 3*8;
+    return arr;
+}
+
+function reset() { bump_ptr = 0; }
+
 function f64_array(size) { return new Float64Array(size); }
 function js_array(size) {
     var array = [];
@@ -25,7 +36,7 @@ function js_array(size) {
     return array;
 }
 
-function indirect(array_func, vec_func, num_elements) {
+function indirect(vec_func, num_elements) {
     var pos_array = [];
     var vel_array = [];
 
@@ -235,35 +246,46 @@ function indexed_random(array_func, num_elements) {
 
 // it is preferable to use a multiple of 4 otherwise packed_interleaved
 // will do more works than the other tests
-var NUM_ELEMENTS = 120000;
+
+function clone_function(func) {
+    reset();
+    return eval("_=" + func.toSource());
+}
 
 function run_tests() {
-/*
     println(" ----------------- js array of [] vectors ------------ ");
-    indirect(js_array, js_array_vec3, NUM_ELEMENTS);
+    clone_function(indirect)(js_array_vec3, NUM_ELEMENTS);
 
     println(" ----------------- js array of Float64Array vectors ------------ ");
-    // using lots of small typed arrays appears to be incrdibly slow.
-    // TODO: why?
-    indirect(js_array, f64_array_vec3, NUM_ELEMENTS);
+    clone_function(indirect)(f64_array_vec3, NUM_ELEMENTS);
+
+    println(" ----------------- js array of Float64Array views in a big buffer ------------ ");
+    clone_function(indirect)(f64_array_view, NUM_ELEMENTS);
+
 
     println(" ----------------- js array of objects containing [] vectors ------------ ");
-    obj_indirect(js_array, js_array_vec3, NUM_ELEMENTS);
+    clone_function(obj_indirect)(js_array, js_array_vec3, NUM_ELEMENTS);
 
     println(" ----------------- js array of objects containing [] vectors (out of order init) ------------ ");
-    obj_indirect_out_of_order(js_array, js_array_vec3, NUM_ELEMENTS);
+    clone_function(obj_indirect_out_of_order)(js_array, js_array_vec3, NUM_ELEMENTS);
 
     // using lots of small typed arrays appears to be incrdibly slow.
     println(" ----------------- js array of objects containing Float64Array vectors ------------ ");
-    obj_indirect(js_array, f64_array_vec3, NUM_ELEMENTS);
+    clone_function(obj_indirect)(js_array, f64_array_vec3, NUM_ELEMENTS);
+
+    println(" ----------------- js array of objects containing Float64Array views ------------ ");
+    clone_function(obj_indirect)(js_array, f64_array_view, NUM_ELEMENTS);
     
     println(" ----------------- packed typed array ------------ ");
-    packed(f64_array, NUM_ELEMENTS);
-    packed_interleaved(f64_array, NUM_ELEMENTS);
-*/
-    println(" ----------------- indexed typed array ------------ ");
-    indexed_linear(f64_array, NUM_ELEMENTS);
-    indexed_random(f64_array, NUM_ELEMENTS);
+    clone_function(packed)(f64_array, NUM_ELEMENTS);
+    println(" ----------------- packed typed array interleaved ------------ ");
+    clone_function(packed_interleaved)(f64_array, NUM_ELEMENTS);
+
+    println(" ----------------- indexed typed array linear input ------------ ");
+    clone_function(indexed_linear)(f64_array, NUM_ELEMENTS);
+    println(" ----------------- indexed typed array random input------------ ");
+    clone_function(indexed_random)(f64_array, NUM_ELEMENTS);
+
 }
 
 run_tests();

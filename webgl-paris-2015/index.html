@@ -1,0 +1,543 @@
+<!DOCTYPE HTML>
+<!-- <html lang="en-US"> -->
+<html lang="en-US" class="fade">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Performance on the Web</title>
+  <meta name="viewport" content="width=device-width, user-scalable=yes">
+  <link rel="stylesheet" href="themes/mozilla/styles/style.css">
+</head>
+<body class="list">
+  <header class="caption">
+    <h1>Memory locality and JS performance</h1>
+    <p class="footer">
+      Nicolas Silva,
+      <a href="http://twitter.com/">@nicalsilva</a>
+    </p>
+  </header>
+
+  <div id="cover" class="slide"><div>
+    <section>
+      <header>
+        <h2>Ramblings about performance</h2>
+      </header>
+      <img src="pictures/webgl1.png"
+           style="position:absolute; bottom:80px; right:22%; width:60%;">
+
+      <small class="byline">
+        Nicolas Silva (@nicalsilva), WebGL Paris, 2015
+      </small>
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="understand_platform" class="slide oneline"><div>
+    <section>
+      <header>
+        <h2>Understand </br> your target platform</h2>
+      </header>
+      <div style="position: absolute; bottom:20%; right: 15%;">
+        The browser, the JIT, the CPU, the GPU...
+      </div>
+      <footer class="notes"> </footer>
+    </section>
+  </div></div>
+
+  <div id="web-platform" class="slide"><div>
+    <section>
+      <header>
+        <h2>So what is your target platform?</h2>
+      </header>
+
+      <ul>
+        <li>Javascript engine (execution model, garbage collector)</li>
+        <li>Web Layout and rendering engine</li>
+        <li>WebGL implementation (ANGLE)</li>
+        <li>OS and Drivers</li>
+        <li>Hardware (CPU and GPU)</li>
+      </ul>
+      <br>
+      You should read <a>https://wiki.mozilla.org/Gecko:Overview</a>
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="javacript" class="slide oneline"><div>
+    <section>
+      <header>
+        <h2>Javascript engines</h2>
+      </header>
+      <div style="position: absolute; bottom:20%; right: 15%;">
+        They are your friends, but you gotta help them out a bit
+      </div>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="spidermonkey" class="slide"><div>
+    <section>
+      <header>
+        <h2>Spider-monkey</h2>
+      </header>
+
+      <img src="pictures/SpiderMonkey.png"
+           style="position:absolute; bottom:10%; left:15%; width:70%;">
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="flashback" class="slide oneline"><div>
+    <section>
+      <header>
+        <h2>Flashback...</h2>
+      </header>
+      <div style="position: absolute; bottom:20%; right: 15%;">
+        <a href="https://www.youtube.com/watch?v=kJOQl6zawHI">WebGL Paris 2014</a>
+      </div>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="arrays" class="slide"><div>
+    <section>
+      <header>
+        <h2>JS objects and arrays in memory</h2>
+      </header>
+      <ul>
+        <li>References (<a href="http://wingolog.org/archives/2011/05/18/value-representation-in-javascript-implementations">nan-boxing</a>) point to a header
+        <li>The header has a pointer to some type information, and to a <strong>contiguous</strong> block of data
+        <li>If the data is small (< ~12-16 elts) it is inlined next to the header
+      </ul>
+      <img src="pictures/js_repr.png"
+           style="position:absolute; bottom:80px; right:22%; width:60%;">
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="memory-is-slow" class="slide oneline"><div>
+    <section>
+      <header>
+        <h2>Accessing memory</h2>
+      </header>
+      <div style="position: absolute; bottom:20%; right: 15%;">
+        it's slow.
+      </div>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="cache" class="slide"><div>
+    <section>
+      <header>
+        <h2>Accessing memory - cpu cache</h2>
+      </header>
+
+      <img src="pictures/cpucache.png"
+           style="position:absolute; bottom:20%; left:30%; width:40%;">
+
+      <div style="position: absolute; bottom:10%; right: 15%;">
+      Read <a href="https://lwn.net/Articles/250967/"> What every programmer should know about memory</a>.
+      </div>
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="sowhatchanged" class="slide oneline"><div>
+    <section>
+      <header>
+        <h2>So what's changed?</h2>
+      </header>
+      <div style="position: absolute; bottom:20%; right: 15%;">
+        since Webgl Paris 2014
+      </div>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="whatchanged2" class="slide"><div>
+    <section>
+      <header>
+        <h2>Not much has changed</h2>
+      </header>
+
+      <ul>
+        <li>Memory accesses are still important for performance</li>
+        <li> I made a mistake in the benchmarks (polymorphic
+          <a href="https://en.wikipedia.org/wiki/Inline_caching">inline cache</a>)!
+        <li> Thankfully the results are still in line with what I was talking about.
+      </ul>
+        <br> // tightly optimized for typed arrays
+        <br> benchmark_foo(create_typed_array);
+        <br> // optimized for both typed arrays and js arrays
+        <br> benchmark_foo(create_js_array);
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="mistake" class="slide"><div>
+    <section>
+      <header>
+        <h2>So that you don't repeat my mistake...</h2>
+      </header>
+
+<b>function</b> clone_function(func) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;    return eval("_=" + func.toSource());<br>
+}<br>
+<br>
+clone_function(benchmark_foo)(create_js_arrays);<br>
+clone_function(benchmark_foo)(create_typed_arrays);<br>
+<br>
+Create a separate function if you really want to call it with different types as parameter (which you should not do in the first place).
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="lookout" class="slide"><div>
+    <section>
+      <header>
+        <h2>Anyways be careful about:</h2>
+      </header>
+
+      <ul class="inner">
+        <li class="active">Types</li>
+        <li>Memory accesses patterns</li>
+        <li>Allocations</li>
+        <li>Not blocking the main thread</li>
+      </ul>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="omtc" class="slide"><div>
+    <section>
+      <header>
+        <h2>About main-thread contention</h2>
+      </header>
+
+      <ul class="inner">
+        <li class="active"> For historical reasons there are still a lot of things happening on the browser's main event loop (JS, layout, rendering, lots of other things).
+        <li>Don't animate things by hand in JS, use CSS!</li>
+        <li>Don't schedule all of your dom changes and animations at the same time[1]</li>
+        <li>Move your application logic into a worker</li>
+      </ul>
+
+      <br>[1] Check out <a href="https://twitter.com/etiennesegonzac">@etiennesegonzac</a>'s <a href="https://github.com/etiennesegonzac/dom-scheduler">dom scheduler</a>.
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="dod" class="slide oneline"><div>
+    <section>
+      <header>
+        <h2>Data oriented design</h2>
+      </header>
+      <div style="position: absolute; bottom:20%; right: 15%;">
+      forget about object oriented programming
+      </div>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="dod-principles" class="slide"><div>
+    <section>
+      <header>
+        <h2>Principles:</h2>
+      </header>
+      <ul class="inner">
+        <li class="active">A program is all about <b>transforming data</b></li>
+        <li>To understand your problem, understand your data</li>
+        <li>Understand the <b>cost</b> of solving the problem</li>
+        <li>Understand your target <b>platforms</b></li>
+        <li>"When there is one, there are often many"</li>
+      </ul>
+
+      <br>Watch Mike Acton's <a href="https://youtu.be/rX0ItVEVjHc">cppcon 2014 talk</a>
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="data" class="slide"><div>
+    <section>
+      <header>
+        <h2>It's all about data</h2>
+      </header>
+      <ul class="inner">
+        <li class="active">How data is laid out in memory is a huge factor for performance</li>
+        <li>Compilers and JITs understand and optimize data, not abstractions</li>
+      </ul>
+     <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="oopfallacy" class="slide"><div>
+    <section>
+      <header>
+        <h2>Problems with Object Oriented Programming:</h2>
+      </header>
+
+      <ul class="inner">
+        <li class="active">OOP encourages you to model problems around the real world.</li>
+        <li>Suddenly, you are not working on the problem but on an analogy of the problem.</li>
+        <li>If you JUST solve the problem at hand instead of modeling abstractions around it, you produce less code for a simpler and more efficient solution.
+      </ul>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="classhierarchy" class="slide"><div>
+    <section>
+      <header>
+        <h2>Inheritance gone mad</h2>
+      </header>
+
+      <ul>
+        <li>OOP encourages you to think in term of <br> hierarchies of types
+        <li>Building type hierarchies feels satisfying <br> to some people but is not always usefull</li>
+        <li>Hard to navigate this kind of code
+        <li>Hard to make modify it
+        <li>Super hard to optimize
+      </ul>
+
+      <img src="pictures/classesgonemad.png"
+           style="position:absolute; bottom:10%; left:60%; width:30%;">
+
+      <footer class="notes">
+
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="wrong1" class="slide"><div>
+    <section>
+      <header>
+        <h2>What's wrong?</h2>
+      </header>
+
+
+<b>function</b> Particle(position, speed) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp; ...<br>
+}<br>
+Particle.prototype.update = function() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;this.pos.x += this.speed.x;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;this.pos.y += this.speed.y;<br>
+}<br>
+<b>for</b> (p <b>of</b> all_particles) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp; p.update();<br>
+}<br>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="better1" class="slide"><div>
+    <section>
+      <header>
+        <h2>Instead we want something like</h2>
+      </header>
+
+<b>function</b> apply_particles_update(particles) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>for</b> (<b>var</b> i=0; i < particles.num_particles; ++i) {</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; particles.positions[i*2] += particles.speeds[i*2];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; particles.positions[i*2+1] += particles.speeds[i*2+1];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+    <br> This code is cache-friendly because we reason about the particles as a group and not individually.
+
+      <footer class="notes">
+      exemple de servo/webrender
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="magritte" class="slide"><div>
+    <section>
+      <header>
+        <h2>La trahison des images</h2>
+      </header>
+      <img src="pictures/MagrittePipe.jpg"
+           style="position:absolute; bottom:10%; left:20%; width:60%;">
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="analogies" class="slide"><div>
+    <section>
+      <header>
+        <h2>Analogies</h2>
+      </header>
+
+      <ul>
+        <li> Images/analogies short-circuit <b>rational thinking</b></li>
+        <li> They carry implicit semantic.</li>
+        <li> We need to reason about <b>the problem</b>, not about a <b>mental projection</b> of the problem that resembles the real world.</li>
+        <li>It is a natural and unconscious process.</li>
+      </ul>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="encapsulation" class="slide"><div>
+    <section>
+      <header>
+        <h2>Encapsulation vs Abstraction</h2>
+      </header>
+
+      <ul>
+        <li><b>Abstraction</b> = "I manipulate a concept but I don't know what's inside (black box)"
+          <ul>
+            <li> <b>:(</b> Hides information to the programmer and the compiler
+            <li> <b>:)</b> Sometimes it's useful, just don't abuse it
+          </ul>
+        </li>
+        <br>
+        <li><b>Encapsulation</b> = "I manipulate a logical unit and I can't mess with its internals"
+          <ul>
+            <li> <b>:)</b> Protects your code (public/private)
+            <li> <b>:)</b> Splits parts of the code into reusable units
+          </ul>
+        </li>
+      </ul>
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+
+  <div id="futur" class="slide oneline"><div>
+    <section>
+      <header>
+        <h2>What's coming?</h2>
+      </header>
+      <div style="position: absolute; bottom:20%; right: 15%;">
+      yay, more things to play with!
+      </div>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="webasm" class="slide"><div>
+    <section>
+      <header>
+        <h2>WebAssembly</h2>
+      </header>
+
+      <ul>
+        <li>The next step after asm.js</li>
+        <li>A compact representation (network speed...)</li>
+        <li>Much faster to decode that JS (startup performance)</li> <!--20x faster!-->
+        <li>JS interop</li>
+        <li>Asm.js polyfill (backward compatibility)</li>
+        <li>Good place to add low-level features that don't belong in JS</li>
+        <li>Designed to be extensible</li>
+      </ul>
+
+      Read the <a href="https://github.com/WebAssembly/design">design repo on github</a>!
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="webasm-longterm" class="slide"><div>
+    <section>
+      <header>
+        <h2>In the long run</h2>
+      </header>
+
+      <ul>
+        <li>Tools! (Debugger, profiler, source-maps, address-sanitizer, etc.)</li>
+        <li>Dynamic linking (load, unload modules a la dlopen)</li>
+        <li>Integrated garbage collector to better interact with JS and the DOM</li>
+        <li>Make it possible to implement JITs in WebAsm!</li>
+        <li>Multi-process support, ipc, </li>
+      </ul>
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="sharedarraybuffer" class="slide"><div>
+    <section>
+      <header>
+        <h2>SharedArrayBuffer</h2>
+      </header>
+
+      <ul>
+        <li> TypedArray that can be shared between workers </li>
+        <li> Atomic operations </li>
+        <li> Spec draft passed TC39 stage 1</li>
+        <li> Prototype implemenation in Firefox nigthly and Chrome canary</li>
+      </ul>
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+
+  <div id="WebGLWorkers" class="slide"><div>
+    <section>
+      <header>
+        <h2>WebGL workers</h2>
+      </header>
+
+      <ul>
+        <li> Use WebGL from a worker</li>
+        <li> Avoid main-thread contention \o/</li>
+        <li> Important for any webgl-heavy app</li>
+        <li> Critical in order to reduce frame latency in VR</li>
+      </ul>
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="SIMD" class="slide"><div>
+    <section>
+      <header>
+        <h2>SIMD.js</h2>
+      </header>
+
+      <ul>
+        <li> Single-insruction-multiple-data instructions in JS</li>
+        <li> Polyfill available</li>
+        <li> Mostly implemented in Firefox, Chrome also working on it.
+        <li> Used by glmatrix!</li>
+      </ul>
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="refs" class="slide"><div>
+    <section>
+      <header>
+        <h2>A few links</h2>
+      </header>
+      <ul>
+        <li>Slides: <a href="nical.github.com/talks/webgl-paris-2015">
+          nical.github.com/talks/webgl-paris-2014 </a>
+        <li>Last year's micro benchmarks: <a href="github.com/nical/talks/webgl-paris-2014/bench">
+          nical.github.com/talks/webgl-paris-2014 </a>
+
+      </ul>
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div class="progress"><div></div></div>
+  <script src="scripts/script.js"></script>
+  <!-- Copyright © 2010–2012 Vadim Makeev — pepelsbey.net -->
+</body>
+</html>
