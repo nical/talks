@@ -1,0 +1,487 @@
+<!DOCTYPE HTML>
+<!-- <html lang="en-US"> -->
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <title>WebRender overview</title>
+
+  <meta name="viewport" content="width=device-width, user-scalable=yes">
+  <link rel="stylesheet" href="themes/mozilla/styles/style.css">
+</head>
+<body class="list">
+  <header class="caption">
+    <h1>WebRender overview</h1>
+    <p class="footer">
+      Nicolas Silva,
+      <a href="http://twitter.com/">@nicalsilva</a>
+    </p>
+  </header>
+  <aside class="talkdescription">
+    <p>This slide deck is using the shower system - roll over the previews to see the notes and click any slide to go into presentation mode. Then use keys to navigate. <button onclick="goFullScreen()">Go fullscreen</button></p>
+    <p class="abstract">
+      <strong>Abstract: </strong>
+        A technical overview of the rendering architectures of past and future browsers.
+    </p>
+  </aside>
+
+  <div id="intro" class="slide oneline"><div>
+    <section>
+      <header>
+        <h2><mark><strong>WebRender</strong></mark>: overvew</h2>
+      </header>
+
+      <div> Nicolas Silva - FOSDEM 2017 </div>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="about-servo" class="slide"><div>
+    <section>
+      <header>
+        <h2>about:<mark>servo</mark></h2>
+      </header>
+      <img src="pictures/servo.png"
+           class="middle"
+           alt="servo logo">
+      <footer class="notes">
+
+ - A research browser written in rust
+ - Useful to try out new ideas
+ - WebRender is its graphics rendering component
+
+      </footer>
+    </section>
+  </div></div>
+
+ <div id="about-gecko" class="slide"><div>
+    <section>
+      <header>
+        <h2>about:<mark>gecko</mark></h2>
+      </header>
+      <ul class="longlist">
+        <li><strong>DOM tree</strong>: the web page as seen by web developpers</li>
+        <li><strong>Frame tree</strong>: positioned elements (<strong>layout</strong>)
+        <li><strong>Display list</strong>: high-level drawing commands (<strong>invalidation</strong>)</li>
+        <li><strong>Layer tree</strong>: tree of rendered intermediate surfaces (<strong>painting</strong>)</li>
+        -----
+        <li><strong>Compositor layer tree</strong>: mirrored on the compositor process (<strong>compositing</strong>)</li>
+      </ul>
+
+      <img
+        src="pictures/gecko-pipeline.svg"
+        class="bottom"
+        style="position:absolute; width:100% left: 0px; bottom:0px;"
+      >
+
+      <footer class="notes">
+
+This architecture and the abstraction we use are designed arount the idea of rendering on the CPU. Progressively we'h started using the GPU for simple things like compositing. But we've mostly tried to adapt our usage of the GPU to our drawing model.
+
+If we want to make good use of the GPU we need to re-think our architecture and design it around the Way GPUs work nowadays.
+
+Moving rendering to the GPU is important because the processing power of CPUs hasn't scaled well with pixel density and the increasing demand for more interactivity.
+
+      </footer>
+    </section>
+  </div></div>
+
+<!--
+  <div id="everything-gpu" class="slide oneline"><div>
+    <section>
+      <header>
+        <h2>Design for the <strong>GPU</strong>?</h2>
+      </header>
+      <footer class="notes">
+
+Rather than painting and compositing
+
+      </footer>
+    </section>
+  </div></div>
+-->
+
+<!--
+   <div id="immediatemode" class="slide"><div>
+    <section>
+      <header>
+        <h2><strong>Immediate mode</strong> rendering</h2>
+      </header>
+        <pre>
+            <code>// each frame </code>
+            <code>  </code>
+            <code>canvas.move_to(0, 0);</code>
+            <code>canvas.line_to(1, 0);</code>
+            <code>// ... </code>
+            <code>canvas.close();</code>
+            <code>canvas.fill()</code>
+            <code>// ... </code>
+        </pre>
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+ <div id="retainedmode" class="slide"><div>
+    <section>
+      <header>
+        <h2><strong>Retained mode</strong> rendering</h2>
+      </header>
+      <ul>
+        <li>Generate a representation of the scene that is understandable to the GPU</li>
+        <li>optimize rendering by looking at the whole scene instead of command by command</li>
+        <li>Keep heavy resources in GPU memory between frames</li>
+        <li>Take advantage of the knowledge that most what's in the current frame was already in the previous frame</li>
+      </ul>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+-->
+
+  <div id="whatabout-wr" class="slide oneline"><div>
+    <section>
+      <header>
+        <h2>What about <strong>WebRender</strong>?</h2>
+      </header>
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="webrender-1" class="slide"><div>
+    <section>
+      <header>
+        <h2><strong>WebRender</strong></h2>
+      </header>
+      <ul>
+        <li>Retained mode rendering</li>
+        <li>Written in rust</li>
+        <li>OpenGL (for now)</li>
+        <li>Designed to work like a game rendering engine</li>
+        <li>No painting/compositing distinction (renders everything to the window directly)</li>
+      </ul>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+ <div id="about-gpu" class="slide"><div>
+    <section>
+      <header>
+        <h2>about:<mark>GPU</mark></h2>
+      </header>
+      How do we make things reasonably fast on a GPU?
+      <ul class="list">
+        <li>Design around primitives that the GPU can work with</li>
+        <li>avoid state switches, batch, batch, <strong>batch</strong>!</li>
+        <li>Avoid <strong>data transfer</strong> to and from the CPU</li>
+        <li>Avoid <strong>overdraw</strong></li>
+      </ul>
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="web-primitives" class="slide"><div>
+    <section>
+      <header>
+        <h2>What are web pages made of</h2>
+      </header>
+      <img src="pictures/github.png"
+           class="right"
+           alt="screenshot of a web page"
+           style="width:50%; position:absolute; right:0%; top:15%">
+
+      <ul>
+        <li>text</li>
+        <li>(rounded) rectangles</li>
+        <li>borders</li>
+        <li>images</li>
+        <li>shadows</li>
+        <li>...</li>
+      </ul>
+
+      <small class="credits">
+        <a href="https://github.com/servo/servo/">
+          image: servo project on github
+        </a>
+      </small>
+      <footer class="notes">
+
+      </footer>
+    </section>
+  </div></div>
+
+
+  <div id="shader-prim" class="slide"><div>
+    <section>
+      <header>
+        <h2>Shader primitives</h2>
+      </header>
+
+      <ul class="longlist">
+        <li>Solid color</li>
+        <li>Image</li>
+        <li>YUV Image</li>
+        <li>Text</li>
+        <li>Border</li>
+        <li>Blur</li>
+        <li>Rounded rectangle shadow</li>
+        <li>Composite (multiply, hard-light, etc.)</li>
+        <li>Blend (sepia, invert, etc.)</li>
+        <li>Gradients (linear, radial, etc.)</li>
+        <li>Clipped versions of each primitive.</li>
+      </ul>
+
+      <footer class="notes">
+
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="shaders" class="slide"><div>
+    <section>
+      <header>
+        <h2>Anatomy of the shaders</h2>
+      </header>
+
+      <ul class = "longlist">
+        <li><strong>Vertex data</strong>
+        <ul>
+          <li> Simple unit quad drawn instancing</li>
+          <li> No primitive data</li>
+        </ul>
+        </li>
+        <li><strong>Vertex shader</strong>
+        <ul>
+          <li> Fetch primitive data using the instance ID</li>
+          <li> Apply rectangular clip
+          <li> Apply transforms
+        </ul>
+        </li>
+        <li><strong>Fragment shader</strong>
+        <ul>
+          <li> Compute the color (different for each primitive)</li>
+        </ul>
+        </li>
+      </ul>
+
+      <img src="pictures/shading-pipeline.svg"
+           class="right"
+           alt="shading pipeline"
+           style="width:42%; position:absolute; right:2%; top:20%">
+
+      <footer class="notes">
+
+      </footer>
+    </section>
+  </div></div>
+
+
+  <div id="culling" class="slide"><div>
+    <section>
+      <header>
+        <h2>Occlusion culling</h2>
+      </header>
+
+      <ul>
+        <li>Very important!</li>
+        <li>Use the Z-buffer with the paint order to generate the z coordinates</li>
+        <li>Front-to-back opaque pass (Z-Read/Write)</li>
+        <li>Back-to-front transparent pass (Z-Read)</li>
+      </ul>
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+  <div id="batching" class="slide"><div>
+    <section>
+      <header>
+        <h2>Batching</h2>
+      </header>
+
+      <ul>
+        <li>Very important as well</li>
+        <li>texture cache for image data and glyphs</li>
+        <li>Opaque pass (order independent)
+          <ul>
+            <li>Easy, since we can reorder draw calls</li>
+          </ul>
+        </li>
+        <li>Transparent pass (order matters for overlapping primitives)
+          <ul>
+            <li>Tiling (quickly find non-overlapping primitives)</li>
+            <li>Maybe something else...</li>
+          </ul>
+        </li>
+      </ul>
+
+      <footer class="notes"></footer>
+    </section>
+  </div></div>
+
+
+  <div id="ot-example" class="slide"><div>
+    <section>
+      <header>
+        <h2>Opaque pass (front to back)</h2>
+      </header>
+      <img src="pictures/batch-01.svg"
+           class="middle"
+           alt="opaque and transparent passes example">
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="opass-01" class="slide"><div>
+    <section>
+      <header>
+        <h2>Opaque pass (front to back)</h2>
+      </header>
+      <img src="pictures/batch-opaque-01.svg"
+           class="middle"
+           alt="opaque pass step by step">
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="opass-02" class="slide"><div>
+    <section>
+      <header>
+        <h2>Opaque pass (front to back)</h2>
+      </header>
+      <img src="pictures/batch-opaque-02.svg"
+           class="middle"
+           alt="opaque pass step by step">
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="opass-03" class="slide"><div>
+    <section>
+      <header>
+        <h2>Opaque pass (front to back)</h2>
+      </header>
+      <img src="pictures/batch-opaque-03.svg"
+           class="middle"
+           alt="opaque pass step by step">
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="opass-04" class="slide"><div>
+    <section>
+      <header>
+        <h2>Opaque pass (front to back)</h2>
+      </header>
+      <img src="pictures/batch-opaque-04.svg"
+           class="middle"
+           alt="opaque pass step by step">
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="tpass-01" class="slide"><div>
+    <section>
+      <header>
+        <h2>Transparent pass (back to front)</h2>
+      </header>
+      <img src="pictures/batch-transparent-01.svg"
+           class="middle"
+           alt="transparent pass step by step">
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="tpass-02" class="slide"><div>
+    <section>
+      <header>
+        <h2>Transparent pass (back to front)</h2>
+      </header>
+      <img src="pictures/batch-transparent-02.svg"
+           class="middle"
+           alt="transparent pass step by step">
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="tpass-03" class="slide"><div>
+    <section>
+      <header>
+        <h2>Transparent pass (back to front)</h2>
+      </header>
+      <img src="pictures/batch-transparent-03.svg"
+           class="middle"
+           alt="transparent pass step by step">
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+  <div id="webrender-2" class="slide"><div>
+    <section>
+      <header>
+        <h2><strong>WebRender pipeline</strong></h2>
+      </header>
+      <ul>
+        <li>The "backend" thread does most of the CPU work (managing resources, generating batches, etc.) </li>
+        <li>The render thread only submits commands to the GPU</li>
+      </ul>
+
+      <img src="pictures/wr-pipeline.svg"
+           class="bottom"
+           alt="webrender pipeline"
+           style="width:100%; height:40%; position:absolute; bottom:10%;">
+
+      <footer class="notes">
+      </footer>
+    </section>
+  </div></div>
+
+
+  <div id="thanks" class="slide"><div>
+    <section>
+      <header>
+        <h2><strong>Wrapping up</strong></h2>
+      </header>
+
+      <ul class="nobull">
+        <li>WebRender overview - FOSDEM 2017</li>
+        <li>Nicolas Silva (:nical) - <a href="https://twitter.com/nicalsilva">@nicalsilva</a></li>
+        <li></li>
+      </ul>
+      <strong>Links:</strong>
+      <ul class="nobull">
+        <li><a href="https://github.com/servo/webrender/">github.com/servo/webrender</a></li>
+        <li><a href="https://github.com/servo/servo/">github.com/servo/servo</a></li>
+        <li></li>
+      </ul>
+
+    <footer class="notes">
+    </footer>
+
+    </section>
+  </div></div>
+
+  <!--
+    To hide progress bar from entire presentation
+    just remove “progress” element.
+    -->
+  <div class="progress"><div></div></div>
+
+  <script src="scripts/script.js"></script>
+</body>
+</html>
