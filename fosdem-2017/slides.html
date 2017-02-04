@@ -28,7 +28,7 @@
   <div id="intro" class="slide oneline"><div>
     <section>
       <header>
-        <h2><mark><strong>WebRender</strong></mark>: overvew</h2>
+        <h2><mark><strong>WebRender</strong></mark>: overview</h2>
       </header>
 
       <div> Nicolas Silva - FOSDEM 2017 </div>
@@ -151,20 +151,24 @@ Rather than painting and compositing
     </section>
   </div></div>
 
-  <div id="webrender-1" class="slide"><div>
+  <div id="webrender-3" class="slide"><div>
     <section>
       <header>
         <h2><strong>WebRender</strong></h2>
       </header>
+
       <ul>
-        <li>Retained mode rendering</li>
-        <li>Written in rust</li>
-        <li>OpenGL (for now)</li>
         <li>Designed to work like a game rendering engine</li>
         <li>No painting/compositing distinction (renders everything to the window directly)</li>
+        <li>A lot of things can be treated as axis-aligned rectangles</li>
+        <li>Other things can be pre-rendered in an intermediate surface and treated as an image</li>
+        <li>Retained mode rendering</li>
+        <li>OpenGL (for now)</li>
+        <li>Written in rust</li>
       </ul>
 
       <footer class="notes">
+
       </footer>
     </section>
   </div></div>
@@ -216,7 +220,6 @@ Rather than painting and compositing
       </footer>
     </section>
   </div></div>
-
 
   <div id="shader-prim" class="slide"><div>
     <section>
@@ -467,6 +470,7 @@ Rather than painting and compositing
       <ul class="nobull">
         <li><a href="https://github.com/servo/webrender/">github.com/servo/webrender</a></li>
         <li><a href="https://github.com/servo/servo/">github.com/servo/servo</a></li>
+        <li><a href="https://nical.github.io/talks/fosdem-2017/slides.html">nical.github.io/talks/fosdem-2017/slides.html</a></li>
         <li></li>
       </ul>
 
