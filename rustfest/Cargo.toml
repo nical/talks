@@ -1,0 +1,20 @@
+[package]
+name = "rustfest-lyon"
+version = "0.1.0"
+authors = ["Nicolas Silva <nical@fastmail.com>"]
+
+[[bin]]
+name = "presentation"
+path = "src/main.rs"
+
+[dependencies]
+lyon = { version = "0.10.0", features = ["extra", "serialization", "svg"] }
+resvg = { git = "https://github.com/RazrFalcon/resvg.git", rev = "a135a5875b592e82adbcaa535915041030ff7b74" }
+
+gfx = "0.17.1"
+gfx_device_gl = "0.15.0"
+gfx_window_glutin = "0.20.0"
+glutin = "0.12.0"
+serde = "1.0.15"
+serde_derive = "1.0.15"
+ron = "0.1.3"
