@@ -6,15 +6,16 @@ extern crate glutin;
 extern crate lyon;
 extern crate resvg;
 
-extern crate ron;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
+//extern crate ron;
+//extern crate serde;
+//#[macro_use]
+//extern crate serde_derive;
 
 mod shaders;
 
 use lyon::path::builder::*;
 use lyon::math::*;
+use lyon::geom::euclid::Transform2D;
 use lyon::tessellation::geometry_builder::{VertexConstructor, VertexBuffers, BuffersBuilder};
 use lyon::tessellation::basic_shapes::*;
 use lyon::tessellation::{FillTessellator, FillOptions};
@@ -26,7 +27,7 @@ use lyon::svg::path_utils::build_path;
 use gfx::traits::{Device, FactoryExt};
 use glutin::{GlContext, EventsLoop, KeyboardInput};
 use glutin::ElementState::Pressed;
-use resvg::tree::{self, Color, TreeExt};
+use resvg::tree::{self, Color};
 
 const DEFAULT_WINDOW_WIDTH: f32 = 800.0;
 const DEFAULT_WINDOW_HEIGHT: f32 = 800.0;
@@ -38,6 +39,8 @@ const FALLBACK_COLOR: Color = Color {
 };
 
 fn main() {
+    let mut slides = load_slides();
+
     let mut bg_geometry: VertexBuffers<BgVertex> = VertexBuffers::new();
 
     fill_rectangle(
@@ -94,36 +97,53 @@ fn main() {
 
     let gpu_globals = factory.create_constant_buffer(1);
 
-    let scene = Scene::load_svg("tiger.svg");
-    let mut ctx = Context {
-        fill_tess: FillTessellator::new(),
-        stroke_tess: StrokeTessellator::new(),
-        z_index: 0,
-    };
-
-    let render_scene = scene.build(&mut ctx);
-
     let mut view = ViewParams {
-        target_zoom: 5.0,
-        zoom: 0.1,
-        target_scroll: vector(70.0, 70.0),
+        target_zoom: 6.0,
+        default_zoom: 6.0,
+        zoom: 10.0,
+        target_scroll: vector(150.0, 100.0),
+        default_scroll: vector(150.0, 100.0),
         scroll: vector(70.0, 70.0),
-        show_points: false,
-        show_wireframe: false,
+        wireframe: false,
         stroke_width: 1.0,
         target_stroke_width: 1.0,
-        draw_background: true,
-        cursor_position: (0.0, 0.0),
         window_size: (DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT),
+        camera_mode: false,
+        current_slide: 0,
     };
 
     let mut cmd_queue: CommandQueue = factory.create_command_buffer().into();
 
-    let gpu_scene = GpuScene::new(&render_scene, &mut factory, &mut cmd_queue);
+    let mut slide = view.current_slide;
+    let mut gpu_scene = GpuScene::new(&slides[slide], &mut factory, &mut cmd_queue);
 
-    let mut frame_count: usize = 0;
+    let camera_mode_color_1 = [0.0, 0.47, 0.9, 1.0];
+    let camera_mode_color_2 = [0.0, 0.1, 0.64, 1.0];
+    let mut bg_color_1 = [0.0, 0.47, 0.9, 1.0];
+    let mut bg_color_2 = [0.0, 0.1, 0.64, 1.0];
+    let mut blueprint = 1.3;
 
-    while update_inputs(&mut events_loop, &mut view) {
+    while update_inputs(&mut events_loop, &mut view, &mut slides) {
+        if view.current_slide >= slides.len() {
+            view.current_slide = slides.len() - 1;
+        }
+        if view.current_slide != slide {
+            slide = view.current_slide;
+            gpu_scene = GpuScene::new(&slides[slide], &mut factory, &mut cmd_queue);
+        }
+
+        let (target_color_1, target_color_2, target_blueprint) = if view.camera_mode {
+            (camera_mode_color_1, camera_mode_color_2, 1.3)
+        } else {
+            (slides[slide].color_1, slides[slide].color_2, 1.0)
+        };
+
+        blueprint = blueprint + 0.02 * (target_blueprint - blueprint);
+        for i in 0..4 {
+            bg_color_1[i] = bg_color_1[i] + 0.07 * (target_color_1[i] - bg_color_1[i]);
+            bg_color_2[i] = bg_color_2[i] + 0.07 * (target_color_2[i] - bg_color_2[i]);
+        }
+
         gfx_window_glutin::update_views(&window, &mut main_fbo, &mut main_depth);
         let (w, h) = window.get_inner_size().unwrap();
         view.window_size = (w as f32, h as f32);
@@ -137,10 +157,13 @@ fn main() {
                 resolution: [w as f32, h as f32],
                 zoom: view.zoom,
                 scroll_offset: view.scroll.to_array(),
+                bg_color_1,
+                bg_color_2,
+                blueprint,
             },
         );
 
-        let pso = if view.show_wireframe { &wireframe_pso } else { &path_pso };
+        let pso = if view.wireframe { &wireframe_pso } else { &path_pso };
 
         cmd_queue.draw(
             &gpu_scene.range,
@@ -148,6 +171,7 @@ fn main() {
             &path_pipeline::Data {
                 vbo: gpu_scene.geometry.clone(),
                 primitives: gpu_scene.primitives.clone(),
+                transforms: gpu_scene.transforms.clone(),
                 gpu_globals: gpu_globals.clone(),
                 out_color: main_fbo.clone(),
                 out_depth: main_depth.clone(),
@@ -168,8 +192,6 @@ fn main() {
         cmd_queue.flush(&mut device);
         window.swap_buffers().unwrap();
         device.cleanup();
-
-        frame_count += 1;
     }
 }
 
@@ -206,9 +228,12 @@ fn convert_color(paint: &tree::Paint, opacity: f64) -> [f32; 4] {
 
 gfx_defines!{
     constant Globals {
+        bg_color_1: [f32; 4] = "u_bg_color_1",
+        bg_color_2: [f32; 4] = "u_bg_color_2",
         resolution: [f32; 2] = "u_resolution",
         scroll_offset: [f32; 2] = "u_scroll_offset",
         zoom: f32 = "u_zoom",
+        blueprint: f32 = "u_blueprint",
     }
 
     vertex GpuVertex {
@@ -219,9 +244,14 @@ gfx_defines!{
 
     constant Primitive {
         color: [f32; 4] = "color",
+        user_data: [f32; 2] = "user_data",
+        transform: i32 = "transform",
         z_index: i32 = "z_index",
-        width: f32 = "width",
-        translate: [f32; 2] = "translate",
+    }
+
+    constant Transform {
+        data0: [f32; 4] = "data0",
+        data1: [f32; 4] = "data1",
     }
 
     pipeline path_pipeline {
@@ -230,6 +260,7 @@ gfx_defines!{
         out_depth: gfx::DepthTarget<gfx::format::DepthStencil> = gfx::preset::depth::LESS_EQUAL_WRITE,
         gpu_globals: gfx::ConstantBuffer<Globals> = "Globals",
         primitives: gfx::ConstantBuffer<Primitive> = "u_primitives",
+        transforms: gfx::ConstantBuffer<Transform> = "u_transforms",
     }
 
     vertex BgVertex {
@@ -286,19 +317,24 @@ impl VertexConstructor<tessellation::StrokeVertex, GpuVertex> for WithId {
 
 struct ViewParams {
     target_zoom: f32,
+    default_zoom: f32,
     zoom: f32,
     target_scroll: Vector,
+    default_scroll: Vector,
     scroll: Vector,
-    show_points: bool,
-    show_wireframe: bool,
+    wireframe: bool,
     stroke_width: f32,
     target_stroke_width: f32,
-    draw_background: bool,
-    cursor_position: (f32, f32),
     window_size: (f32, f32),
+    camera_mode: bool,
+    current_slide: usize,
 }
 
-fn update_inputs(events_loop: &mut EventsLoop, view: &mut ViewParams) -> bool {
+fn update_inputs(
+    events_loop: &mut EventsLoop,
+    view: &mut ViewParams,
+    slides: &mut Vec<RenderScene>
+) -> bool {
     use glutin::Event;
     use glutin::VirtualKeyCode;
     use glutin::WindowEvent;
@@ -313,25 +349,6 @@ fn update_inputs(events_loop: &mut EventsLoop, view: &mut ViewParams) -> bool {
             } => {
                 status = false;
             },
-            Event::WindowEvent {
-                event: WindowEvent::MouseInput {
-                    state: glutin::ElementState::Pressed, button: glutin::MouseButton::Left,
-                ..},
-            ..} => {
-                let half_width = view.window_size.0 * 0.5;
-                let half_height = view.window_size.1 * 0.5;
-                println!("X: {}, Y: {}",
-                    (view.cursor_position.0 - half_width) / view.zoom + view.scroll.x,
-                    (view.cursor_position.1 - half_height) / view.zoom + view.scroll.y,
-                );
-            }
-            Event::WindowEvent {
-                event: WindowEvent::CursorMoved {
-                    position: (x, y),
-                    ..},
-            ..} => {
-                view.cursor_position = (x as f32, y as f32);
-            }
             Event::WindowEvent {
                 event: WindowEvent::KeyboardInput {
                     input: KeyboardInput {
@@ -348,31 +365,39 @@ fn update_inputs(events_loop: &mut EventsLoop, view: &mut ViewParams) -> bool {
                         status = false;
                     }
                     VirtualKeyCode::PageDown => {
+                        view.camera_mode = true;
                         view.target_zoom *= 0.8;
                     }
                     VirtualKeyCode::PageUp => {
+                        view.camera_mode = true;
                         view.target_zoom *= 1.25;
                     }
                     VirtualKeyCode::Left => {
-                        view.target_scroll.x -= 50.0 / view.target_zoom;
+                        if view.camera_mode {
+                            view.target_scroll.x -= 50.0 / view.target_zoom;
+                        } else if view.current_slide > 0 {
+                            view.current_slide -= 1;
+                        }
                     }
                     VirtualKeyCode::Right => {
-                        view.target_scroll.x += 50.0 / view.target_zoom;
+                        if view.camera_mode {
+                            view.target_scroll.x += 50.0 / view.target_zoom;
+                        } else {
+                            view.current_slide += 1;
+                        }
                     }
                     VirtualKeyCode::Up => {
-                        view.target_scroll.y -= 50.0 / view.target_zoom;
+                        if view.camera_mode {
+                            view.target_scroll.y -= 50.0 / view.target_zoom;
+                        }
                     }
                     VirtualKeyCode::Down => {
-                        view.target_scroll.y += 50.0 / view.target_zoom;
-                    }
-                    VirtualKeyCode::P => {
-                        view.show_points = !view.show_points;
+                        if view.camera_mode {
+                            view.target_scroll.y += 50.0 / view.target_zoom;
+                        }
                     }
                     VirtualKeyCode::W => {
-                        view.show_wireframe = !view.show_wireframe;
-                    }
-                    VirtualKeyCode::B => {
-                        view.draw_background = !view.draw_background;
+                        view.wireframe = !view.wireframe;
                     }
                     VirtualKeyCode::A => {
                         view.target_stroke_width /= 0.8;
@@ -380,14 +405,23 @@ fn update_inputs(events_loop: &mut EventsLoop, view: &mut ViewParams) -> bool {
                     VirtualKeyCode::Z => {
                         view.target_stroke_width *= 0.8;
                     }
+                    VirtualKeyCode::R => {
+                        *slides = load_slides();
+                    }
+                    VirtualKeyCode::LControl => {
+                        view.camera_mode = !view.camera_mode;
+                        if !view.camera_mode {
+                            view.target_scroll = view.default_scroll;
+                            view.target_zoom = view.default_zoom;
+                            view.wireframe = false;
+                        }
+                    }
                     _key => {}
                 }
             }
-            _evt => {
-                //println!("{:?}", _evt);
-            }
+            _ => {}
         }
-        //println!(" -- zoom: {}, scroll: {:?}", view.target_zoom, view.target_scroll);
+        //println!(" -- [{}] zoom: {}, scroll: {:?}", view.current_slide, view.target_zoom, view.target_scroll);
     });
 
     view.zoom += (view.target_zoom - view.zoom) / 3.0;
@@ -402,41 +436,44 @@ fn update_inputs(events_loop: &mut EventsLoop, view: &mut ViewParams) -> bool {
 pub struct Context {
     fill_tess: FillTessellator,
     stroke_tess: StrokeTessellator,
-    z_index: i32,
 }
 
 pub struct RenderScene {
     primitives: Vec<Primitive>,
+    transforms: Vec<Transform>,
     geometry: VertexBuffers<GpuVertex>,
+    color_1: [f32; 4],
+    color_2: [f32; 4],
 }
 
-#[derive(Deserialize)]
+//#[derive(Deserialize)]
 pub struct Scene {
     items: Vec<Element>,
 }
 
-#[derive(Deserialize)]
+//#[derive(Deserialize)]
 pub struct Element {
     path: PathData,
     fill: Option<Fill>,
     stroke: Option<Stroke>,
+    transform: Transform2D<f32>,
 }
 
-#[derive(Deserialize)]
+//#[derive(Deserialize)]
 pub struct Fill {
     z_index: i32,
     color: [f32; 4],
     tolerance: f32,
 }
 
-#[derive(Deserialize)]
+//#[derive(Deserialize)]
 pub struct Stroke {
     z_index: i32,
     color: [f32; 4],
     options: StrokeOptions,
 }
 
-#[derive(Deserialize)]
+//#[derive(Deserialize)]
 pub enum PathData {
     String(String),
     Path(Path),
@@ -453,16 +490,25 @@ impl Scene {
         let svg_options = resvg::Options::default();
         let rtree = resvg::parse_rtree_from_file(src_path, &svg_options).unwrap();
 
-        let mut z_index = 0;
+        let mut z_index = 1;
 
         for node in rtree.root().descendants() {
             if let resvg::tree::NodeKind::Path(ref p) = *node.value() {
+
+                let t = node.value().transform();
+
+                let transform = Transform2D::row_major(
+                    t.a as f32, t.b as f32,
+                    t.c as f32, t.d as f32,
+                    t.e as f32, t.f as f32,
+                );
 
                 let path = PathData::Path(convert_path(p));
                 let mut item = Element {
                     path,
                     fill: None,
                     stroke: None,
+                    transform,
                 };
 
                 if let Some(fill) = p.fill {
@@ -507,8 +553,9 @@ impl Scene {
         scene
     }
 
-    fn build(&self, ctx: &mut Context) -> RenderScene {
+    fn build(&self, ctx: &mut Context, color_1: [f32; 4], color_2: [f32; 4]) -> RenderScene {
         let mut primitives = Vec::with_capacity(shaders::PRIM_BUFFER_LEN);
+        let mut transforms = Vec::with_capacity(shaders::PRIM_BUFFER_LEN);
         let mut geometry = VertexBuffers::new();
 
         for item in self.items.iter().rev() {
@@ -517,13 +564,26 @@ impl Scene {
                 PathData::String(ref path_str) => build_path(Path::builder().with_svg(), &path_str).unwrap(),
             };
 
+            let transform_idx = transforms.len() as i32;
+
+            transforms.push(Transform {
+                data0: [
+                    item.transform.m11, item.transform.m12,
+                    item.transform.m21, item.transform.m22,
+                ],
+                data1: [
+                    item.transform.m31, item.transform.m32,
+                    0.0, 0.0,
+                ],
+            });
+
             if let Some(ref fill) = item.fill {
                 primitives.push(
                     Primitive {
                         color: fill.color,
                         z_index: fill.z_index,
-                        width: 0.0,
-                        translate: [0.0, 0.0],
+                        transform: transform_idx,
+                        user_data: [0.0, 0.0],
                     },
                 );
 
@@ -542,8 +602,8 @@ impl Scene {
                     Primitive {
                         color: stroke.color,
                         z_index: stroke.z_index,
-                        width: 0.0,
-                        translate: [0.0, 0.0],
+                        transform: transform_idx,
+                        user_data: [0.0, 0.0],
                     },
                 );
 
@@ -560,19 +620,19 @@ impl Scene {
 
         RenderScene {
             primitives,
+            transforms,
             geometry,
+            color_1,
+            color_2,
         }
     }
 }
 
 struct GpuScene {
     primitives: PrimitiveBuffer,
+    transforms: TransformBuffer,
     geometry: GeomBuffer,
     range: GeomRange,
-}
-
-struct GpuGlobals {
-
 }
 
 impl GpuScene {
@@ -585,6 +645,7 @@ impl GpuScene {
         );
 
         let primitives = factory.create_constant_buffer(shaders::PRIM_BUFFER_LEN);
+        let transforms = factory.create_constant_buffer(shaders::PRIM_BUFFER_LEN);
 
         cmd_queue.update_buffer(
             &primitives,
@@ -592,9 +653,16 @@ impl GpuScene {
             0
         ).unwrap();
 
+        cmd_queue.update_buffer(
+            &transforms,
+            &scene.transforms[..],
+            0
+        ).unwrap();
+
         GpuScene {
             primitives,
             geometry,
+            transforms,
             range,
         }
     }
@@ -602,6 +670,47 @@ impl GpuScene {
 
 type CommandQueue = gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>;
 type PrimitiveBuffer = gfx::handle::Buffer<gfx_device_gl::Resources, Primitive>;
+type TransformBuffer = gfx::handle::Buffer<gfx_device_gl::Resources, Transform>;
 type GeomBuffer = gfx::handle::Buffer<gfx_device_gl::Resources, GpuVertex>;
 type GeomRange = gfx::Slice<gfx_device_gl::Resources>;
 type Factory = gfx_device_gl::Factory;
+
+fn load_slides() -> Vec<RenderScene> {
+    use std::io::BufReader;
+    use std::io::BufRead;
+    use std::fs::File;
+
+    let mut slides = Vec::new();
+    let mut ctx = Context {
+        fill_tess: FillTessellator::new(),
+        stroke_tess: StrokeTessellator::new(),
+    };
+
+    let list_file = File::open("slides.list").unwrap();
+    let reader = BufReader::new(&list_file);
+    for line in reader.lines() {
+        let mut line = line.unwrap();
+        let mut line = line.split_whitespace();
+        let name = line.next().unwrap();
+        let scene = Scene::load_svg(&name);
+        let color_1: [f32; 4] = [
+            line.next().unwrap().parse().unwrap(),
+            line.next().unwrap().parse().unwrap(),
+            line.next().unwrap().parse().unwrap(),
+            1.0,
+        ];
+
+        let color_2: [f32; 4] = [
+            line.next().unwrap().parse().unwrap(),
+            line.next().unwrap().parse().unwrap(),
+            line.next().unwrap().parse().unwrap(),
+            1.0,
+        ];
+
+        println!("{:?} - {:?}/{:?}", name, color_1, color_2);
+
+        slides.push(scene.build(&mut ctx, color_1, color_2));
+    }
+
+    slides
+}

@@ -628,14 +628,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ron"
-version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "serde 1.0.36 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "rustfest-lyon"
 version = "0.1.0"
 dependencies = [
@@ -645,9 +637,6 @@ dependencies = [
  "glutin 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "lyon 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "resvg 0.1.0 (git+https://github.com/RazrFalcon/resvg.git?rev=a135a5875b592e82adbcaa535915041030ff7b74)",
- "ron 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.36 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.36 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1017,7 +1006,6 @@ dependencies = [
 "checksum rand 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "eba5f8cb59cc50ed56be8880a5c7b496bfd9bd26394e176bc67884094145c2c5"
 "checksum redox_syscall 0.1.37 (registry+https://github.com/rust-lang/crates.io-index)" = "0d92eecebad22b767915e4d529f89f28ee96dbbf5a4810d2b844373f136417fd"
 "checksum resvg 0.1.0 (git+https://github.com/RazrFalcon/resvg.git?rev=a135a5875b592e82adbcaa535915041030ff7b74)" = "<none>"
-"checksum ron 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)" = "da06feaa07f69125ab9ddc769b11de29090122170b402547f64b86fe16ebc399"
 "checksum safemem 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e27a8b19b835f7aea908818e871f5cc3a5a186550c30773be987e155e8163d8f"
 "checksum serde 1.0.36 (registry+https://github.com/rust-lang/crates.io-index)" = "c70142ae874a42c70e03c63c6a49abe2ea0079b090bf6e136e99252fc1974bd6"
 "checksum serde_derive 1.0.36 (registry+https://github.com/rust-lang/crates.io-index)" = "6fffe22d41dbddcead5b2c380c4714d44f2eb39292f7e7a0d966d2d45bf56408"

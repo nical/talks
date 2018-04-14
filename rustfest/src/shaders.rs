@@ -13,9 +13,12 @@ pub static BACKGROUND_VERTEX: &'static str = &"
 pub static BACKGROUND_FRAGMENT: &'static str = &"
     #version 140
     uniform Globals {
+        vec4 u_bg_color_1;
+        vec4 u_bg_color_2;
         vec2 u_resolution;
         vec2 u_scroll_offset;
         float u_zoom;
+        float u_blueprint;
     };
     in vec2 v_position;
     out vec4 out_color;
@@ -26,8 +29,8 @@ pub static BACKGROUND_FRAGMENT: &'static str = &"
         // #005fa4
         float vignette = clamp(0.0, 1.0, (0.7*length(v_position)));
         out_color = mix(
-            vec4(0.0, 0.47, 0.9, 1.0),
-            vec4(0.0, 0.1, 0.64, 1.0),
+            u_bg_color_1,
+            u_bg_color_2,
             vignette
         );
 
@@ -41,12 +44,12 @@ pub static BACKGROUND_FRAGMENT: &'static str = &"
 
         if (mod(pos.x, 20.0 / grid_scale * u_zoom) <= 1.0 ||
             mod(pos.y, 20.0 / grid_scale * u_zoom) <= 1.0) {
-            out_color *= 1.2;
+            out_color *= u_blueprint;
         }
 
-        if (mod(pos.x, 100.0 / grid_scale * u_zoom) <= 2.0 ||
-            mod(pos.y, 100.0 / grid_scale * u_zoom) <= 2.0) {
-            out_color *= 1.2;
+        if (mod(pos.x, 100.0 / grid_scale * u_zoom) <= 3.0 ||
+            mod(pos.y, 100.0 / grid_scale * u_zoom) <= 3.0) {
+            out_color *= u_blueprint;
         }
     }
 ";
@@ -56,21 +59,31 @@ pub const PRIM_BUFFER_LEN: usize = 1024;
 pub static VERTEX: &'static str = &"
     #version 140
 
-    #define PRIM_BUFFER_LEN 64
+    #define PRIM_BUFFER_LEN 1024
 
     uniform Globals {
+        vec4 u_bg_color_1;
+        vec4 u_bg_color_2;
         vec2 u_resolution;
         vec2 u_scroll_offset;
         float u_zoom;
+        float u_blueprint;
+    };
+
+    struct Transform {
+        vec4 data0;
+        vec4 data1;
     };
 
     struct Primitive {
         vec4 color;
+        vec2 user_data;
+        int transform;
         int z_index;
-        float width;
-        vec2 translate;
     };
+
     uniform u_primitives { Primitive primitives[PRIM_BUFFER_LEN]; };
+    uniform u_transforms { Transform transforms[PRIM_BUFFER_LEN]; };
 
     in vec2 a_position;
     in vec2 a_normal;
@@ -82,12 +95,23 @@ pub static VERTEX: &'static str = &"
         int id = a_prim_id + gl_InstanceID;
         Primitive prim = primitives[id];
 
-        vec2 local_pos = a_position + a_normal * prim.width;
-        vec2 world_pos = local_pos - u_scroll_offset + prim.translate;
-        vec2 transformed_pos = world_pos * u_zoom / (vec2(0.5, -0.5) * u_resolution);
+        Transform t = transforms[prim.transform];
+        mat3 transform = mat3(
+            t.data0.x, t.data0.y, 0.0,
+            t.data0.z, t.data0.w, 0.0,
+            t.data1.x, t.data1.y, 1.0
+        );
+
+        vec2 pos = a_position;
+
+        pos = (transform * vec3(pos, 1.0)).xy;
+
+        pos = pos - u_scroll_offset;
+
+        pos = pos * u_zoom / (vec2(0.5, -0.5) * u_resolution);
 
         float z = float(prim.z_index) / 4096.0;
-        gl_Position = vec4(transformed_pos, 1.0 - z, 1.0);
+        gl_Position = vec4(pos, 1.0 - z, 1.0);
         v_color = prim.color;
     }
 ";
