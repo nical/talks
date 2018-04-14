@@ -110,6 +110,8 @@ fn main() {
         window_size: (DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT),
         camera_mode: false,
         current_slide: 0,
+        reload: false,
+        calibrate: false,
     };
 
     let mut cmd_queue: CommandQueue = factory.create_command_buffer().into();
@@ -123,19 +125,30 @@ fn main() {
     let mut bg_color_2 = [0.0, 0.1, 0.64, 1.0];
     let mut blueprint = 1.3;
 
-    while update_inputs(&mut events_loop, &mut view, &mut slides) {
+    while update_inputs(&mut events_loop, &mut view) {
+        if view.reload {
+            slides = load_slides();
+        }
+
         if view.current_slide >= slides.len() {
             view.current_slide = slides.len() - 1;
         }
-        if view.current_slide != slide {
+        if view.reload || view.current_slide != slide {
             slide = view.current_slide;
             gpu_scene = GpuScene::new(&slides[slide], &mut factory, &mut cmd_queue);
+        }
+
+        view.reload = false;
+        if view.calibrate {
+            bg_color_1 = [1.0, 1.0, 1.0, 1.0];
+            bg_color_2 = [1.0, 1.0, 1.0, 1.0];
+            view.calibrate = false;
         }
 
         let (target_color_1, target_color_2, target_blueprint) = if view.camera_mode {
             (camera_mode_color_1, camera_mode_color_2, 1.3)
         } else {
-            (slides[slide].color_1, slides[slide].color_2, 1.0)
+            (slides[slide].color_1, slides[slide].color_2, slides[slide].blueprint)
         };
 
         blueprint = blueprint + 0.02 * (target_blueprint - blueprint);
@@ -328,12 +341,13 @@ struct ViewParams {
     window_size: (f32, f32),
     camera_mode: bool,
     current_slide: usize,
+    reload: bool,
+    calibrate: bool,
 }
 
 fn update_inputs(
     events_loop: &mut EventsLoop,
-    view: &mut ViewParams,
-    slides: &mut Vec<RenderScene>
+    view: &mut ViewParams
 ) -> bool {
     use glutin::Event;
     use glutin::VirtualKeyCode;
@@ -406,7 +420,12 @@ fn update_inputs(
                         view.target_stroke_width *= 0.8;
                     }
                     VirtualKeyCode::R => {
-                        *slides = load_slides();
+                        view.reload = true;
+                    }
+                    VirtualKeyCode::Space => {
+                        view.default_zoom = view.target_zoom;
+                        view.default_scroll = view.default_scroll;
+                        view.calibrate = true;
                     }
                     VirtualKeyCode::LControl => {
                         view.camera_mode = !view.camera_mode;
@@ -444,6 +463,7 @@ pub struct RenderScene {
     geometry: VertexBuffers<GpuVertex>,
     color_1: [f32; 4],
     color_2: [f32; 4],
+    blueprint: f32,
 }
 
 //#[derive(Deserialize)]
@@ -553,7 +573,7 @@ impl Scene {
         scene
     }
 
-    fn build(&self, ctx: &mut Context, color_1: [f32; 4], color_2: [f32; 4]) -> RenderScene {
+    fn build(&self, ctx: &mut Context, color_1: [f32; 4], color_2: [f32; 4], blueprint: f32) -> RenderScene {
         let mut primitives = Vec::with_capacity(shaders::PRIM_BUFFER_LEN);
         let mut transforms = Vec::with_capacity(shaders::PRIM_BUFFER_LEN);
         let mut geometry = VertexBuffers::new();
@@ -624,6 +644,7 @@ impl Scene {
             geometry,
             color_1,
             color_2,
+            blueprint
         }
     }
 }
@@ -692,7 +713,7 @@ fn load_slides() -> Vec<RenderScene> {
         let mut line = line.unwrap();
         let mut line = line.split_whitespace();
         let name = line.next().unwrap();
-        let scene = Scene::load_svg(&name);
+        let scene = Scene::load_svg(&format!("slides/{}", name));
         let color_1: [f32; 4] = [
             line.next().unwrap().parse().unwrap(),
             line.next().unwrap().parse().unwrap(),
@@ -707,9 +728,11 @@ fn load_slides() -> Vec<RenderScene> {
             1.0,
         ];
 
+        let blueprint: f32 = line.next().unwrap().parse().unwrap();
+
         println!("{:?} - {:?}/{:?}", name, color_1, color_2);
 
-        slides.push(scene.build(&mut ctx, color_1, color_2));
+        slides.push(scene.build(&mut ctx, color_1, color_2, blueprint));
     }
 
     slides
