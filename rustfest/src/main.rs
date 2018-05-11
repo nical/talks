@@ -50,7 +50,8 @@ fn main() {
     );
 
     let glutin_builder = glutin::WindowBuilder::new()
-        .with_dimensions(DEFAULT_WINDOW_WIDTH as u32, DEFAULT_WINDOW_HEIGHT as u32)
+        //.with_dimensions(DEFAULT_WINDOW_WIDTH as u32, DEFAULT_WINDOW_HEIGHT as u32)
+        .with_maximized(true)
         .with_decorations(false)
         .with_title("rustfest".to_string());
 
@@ -95,14 +96,21 @@ fn main() {
         &bg_geometry.indices[..]
     );
 
+    let viewbox_w = 297.0;
+    let viewbox_h = 210.0;
     let gpu_globals = factory.create_constant_buffer(1);
 
+    let (w, h) = window.get_inner_size().unwrap();
+    let zoom = (h as f32 / viewbox_h).min(w as f32 / viewbox_w);
+    let scroll_x = viewbox_w * 0.5;
+    let scroll_y = viewbox_h * 0.5;
+
     let mut view = ViewParams {
-        target_zoom: 6.0,
-        default_zoom: 6.0,
+        target_zoom: zoom,
+        default_zoom: zoom,
         zoom: 10.0,
-        target_scroll: vector(150.0, 100.0),
-        default_scroll: vector(150.0, 100.0),
+        target_scroll: vector(scroll_x, scroll_y),
+        default_scroll: vector(scroll_x, scroll_y),
         scroll: vector(70.0, 70.0),
         wireframe: false,
         stroke_width: 1.0,
