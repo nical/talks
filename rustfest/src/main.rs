@@ -129,6 +129,8 @@ fn main() {
     let mut bg_color_2 = [0.0, 0.1, 0.64, 1.0];
     let mut blueprint = 1.3;
 
+    let mut anim: Option<i32> = None;
+
     while update_inputs(&mut events_loop, &mut view) {
         if view.reload {
             slides = load_slides();
@@ -137,8 +139,33 @@ fn main() {
         if view.current_slide >= slides.count() {
             view.current_slide = slides.count() - 1;
         }
-        if view.reload || view.current_slide != slide {
+
+        const ANIM_FRAMES: i32 = 10;
+        let mut swap_scenes = view.reload;
+        if view.current_slide != slide {
             slide = view.current_slide;
+            anim = Some(if anim.is_none() { 0 } else { ANIM_FRAMES });
+        }
+
+        // This is the crappiest hard-coded animation ever, Don't do this at home, kids.
+        if let Some(t) = anim {
+            if t > ANIM_FRAMES {
+                anim = None;
+            }
+        }
+
+        let mut anim_offset = 0.0;
+        if let Some(ref mut t) = anim {
+            let tf = *t as f32 * 3.0;
+            anim_offset = tf * tf;
+            if *t == ANIM_FRAMES {
+                swap_scenes = true;
+                view.zoom *= 0.8;
+            }
+            *t += 1;
+        }
+
+        if swap_scenes {
             gpu_scene = GpuScene::new(slides.get(slide), &mut factory, &mut cmd_queue);
         }
 
@@ -174,7 +201,7 @@ fn main() {
             &Globals {
                 resolution: [w as f32, h as f32],
                 zoom: view.zoom,
-                scroll_offset: view.scroll.to_array(),
+                scroll_offset: (view.scroll + Vector::new(anim_offset, 0.0)).to_array(),
                 bg_color_1,
                 bg_color_2,
                 blueprint,
