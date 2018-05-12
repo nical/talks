@@ -6,11 +6,6 @@ extern crate glutin;
 extern crate lyon;
 extern crate resvg;
 
-//extern crate ron;
-//extern crate serde;
-//#[macro_use]
-//extern crate serde_derive;
-
 mod shaders;
 
 use lyon::path::builder::*;
@@ -28,6 +23,7 @@ use gfx::traits::{Device, FactoryExt};
 use glutin::{GlContext, EventsLoop, KeyboardInput};
 use glutin::ElementState::Pressed;
 use resvg::tree::{self, Color};
+use std::collections::HashMap;
 
 const DEFAULT_WINDOW_WIDTH: f32 = 800.0;
 const DEFAULT_WINDOW_HEIGHT: f32 = 800.0;
@@ -125,7 +121,7 @@ fn main() {
     let mut cmd_queue: CommandQueue = factory.create_command_buffer().into();
 
     let mut slide = view.current_slide;
-    let mut gpu_scene = GpuScene::new(&slides[slide], &mut factory, &mut cmd_queue);
+    let mut gpu_scene = GpuScene::new(slides.get(slide), &mut factory, &mut cmd_queue);
 
     let camera_mode_color_1 = [0.0, 0.47, 0.9, 1.0];
     let camera_mode_color_2 = [0.0, 0.1, 0.64, 1.0];
@@ -138,12 +134,12 @@ fn main() {
             slides = load_slides();
         }
 
-        if view.current_slide >= slides.len() {
-            view.current_slide = slides.len() - 1;
+        if view.current_slide >= slides.count() {
+            view.current_slide = slides.count() - 1;
         }
         if view.reload || view.current_slide != slide {
             slide = view.current_slide;
-            gpu_scene = GpuScene::new(&slides[slide], &mut factory, &mut cmd_queue);
+            gpu_scene = GpuScene::new(slides.get(slide), &mut factory, &mut cmd_queue);
         }
 
         view.reload = false;
@@ -156,7 +152,8 @@ fn main() {
         let (target_color_1, target_color_2, target_blueprint) = if view.camera_mode {
             (camera_mode_color_1, camera_mode_color_2, 1.3)
         } else {
-            (slides[slide].color_1, slides[slide].color_2, slides[slide].blueprint)
+            let s = slides.get(slide);
+            (s.color_1, s.color_2, s.blueprint)
         };
 
         blueprint = blueprint + 0.02 * (target_blueprint - blueprint);
@@ -704,12 +701,25 @@ type GeomBuffer = gfx::handle::Buffer<gfx_device_gl::Resources, GpuVertex>;
 type GeomRange = gfx::Slice<gfx_device_gl::Resources>;
 type Factory = gfx_device_gl::Factory;
 
-fn load_slides() -> Vec<RenderScene> {
+struct Slides {
+    list: Vec<String>,
+    scenes: HashMap<String, RenderScene>,
+}
+
+impl Slides {
+    fn count(&self) -> usize { self.list.len() }
+    fn get(&self, idx: usize) -> &RenderScene {
+        &self.scenes[&self.list[idx]]
+    }
+}
+
+fn load_slides() -> Slides {
     use std::io::BufReader;
     use std::io::BufRead;
     use std::fs::File;
 
-    let mut slides = Vec::new();
+    let mut scenes = HashMap::new();
+    let mut list = Vec::new();
     let mut ctx = Context {
         fill_tess: FillTessellator::new(),
         stroke_tess: StrokeTessellator::new(),
@@ -720,7 +730,14 @@ fn load_slides() -> Vec<RenderScene> {
     for line in reader.lines() {
         let mut line = line.unwrap();
         let mut line = line.split_whitespace();
-        let name = line.next().unwrap();
+        let name = line.next().unwrap().to_string();
+
+        list.push(name.clone());
+
+        if scenes.contains_key(&name) {
+            continue;
+        }
+
         let scene = Scene::load_svg(&format!("slides/{}", name));
         let color_1: [f32; 4] = [
             line.next().unwrap().parse().unwrap(),
@@ -740,8 +757,11 @@ fn load_slides() -> Vec<RenderScene> {
 
         println!("{:?} - {:?}/{:?}", name, color_1, color_2);
 
-        slides.push(scene.build(&mut ctx, color_1, color_2, blueprint));
+        scenes.insert(name, scene.build(&mut ctx, color_1, color_2, blueprint));
     }
 
-    slides
+    Slides {
+        list,
+        scenes,
+    }
 }
