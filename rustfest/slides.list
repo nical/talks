@@ -1,12 +1,35 @@
-intro.svg     0.2 0.2 0.2    0.0 0.0 0.0     1.1
-logo.svg      0.4 0.5 0.8    0.2 0.1 0.6     1.0
-rstr-vctr.svg 1.0 1.0 1.0    0.7 0.7 0.7     1.0
-map.svg       0.0 0.5 0.9    0.0 0.1 0.6     0.7
-ui.svg        0.3 0.3 0.3    0.0 0.0 0.0     1.4
-rpg.svg       0.3 0.3 0.3    0.0 0.0 0.0     0.3
-tiger.svg     1.0 0.1 0.3    0.8 0.1 0.2     1.0
-3d.svg        0.3 0.3 0.3    0.0 0.0 0.0     0.9
+intro.svg       0.2 0.2 0.2    0.0 0.0 0.0     1.1
+logo.svg        0.2 0.1 0.3    0.4 0.0 0.1     1.1
+rstr-vctr.svg   1.0 1.0 1.0    0.7 0.7 0.7     1.0
+tiger.svg       0.2 0.1 0.3    0.4 0.0 0.1     1.0
+map.svg         0.0 0.5 0.9    0.0 0.1 0.6     0.7
+ui.svg          0.3 0.3 0.3    0.0 0.0 0.0     1.4
+rpg.svg         0.3 0.3 0.3    0.0 0.0 0.0     0.3
+3d.svg          0.3 0.3 0.3    0.0 0.0 0.0     0.9
 logo.svg
-sweep-01.svg  1.0 0.1 0.3    0.8 0.1 0.2     1.0
+convex.svg      1.0 1.0 1.0    0.8 0.8 1.0     1.0
+concave.svg     0.5 0.5 0.5    0.8 0.8 0.8     1.0
+monotonic.svg   1.0 1.0 1.0    0.8 0.8 1.0     1.0
+sweep-00.svg    0.5 0.4 0.4    0.0 0.0 0.0     0.7
+sweep-01.svg    0.5 0.4 0.4    0.0 0.0 0.0     0.7  no-transition
+sweep-02.svg    0.5 0.4 0.4    0.0 0.0 0.0     0.7  no-transition
+sweep-03.svg    0.5 0.4 0.4    0.0 0.0 0.0     0.7  no-transition
+sweep-04.svg    0.5 0.4 0.4    0.0 0.0 0.0     0.7  no-transition
+sweep-04-2.svg  0.8 0.0 0.0    0.2 0.0 0.0     0.7  no-transition
+sweep-04-3.svg  0.5 0.4 0.4    0.0 0.0 0.0     0.7  no-transition
+sweep-05.svg    0.5 0.4 0.4    0.0 0.0 0.0     0.7  no-transition
+sweep-06.svg    0.5 0.4 0.4    0.0 0.0 0.0     0.7  no-transition
+sweep-07.svg    0.5 0.4 0.4    0.0 0.0 0.0     0.7  no-transition
+sweep-08.svg    0.5 0.4 0.4    0.0 0.0 0.0     0.7  no-transition
+sweep-09.svg    0.5 0.4 0.4    0.0 0.0 0.0     0.7  no-transition
+sweep-10.svg    0.5 0.4 0.4    0.0 0.0 0.0     0.7  no-transition
+sweep-11.svg    0.5 0.4 0.4    0.0 0.0 0.0     0.7  no-transition
+sweep-12.svg    0.8 0.0 0.0    0.2 0.0 0.0     0.7  no-transition
+sweep-13.svg    1.0 0.1 0.3    0.8 0.1 0.2     0.7  no-transition
+sweep-13-2.svg  1.0 0.1 0.3    0.8 0.1 0.2     0.7  no-transition
+sweep-14.svg    0.2 0.8 0.4    0.0 0.6 0.2     1.0  no-transition
 map.svg
 rpg.svg
+zbuffer.svg     1.0 1.0 1.0    1.0 1.0 1.0     1.0
+pathfinder.svg  0.2 0.2 0.2    0.0 0.0 0.0     1.2
+end.svg         0.2 0.1 0.3    0.4 0.0 0.1     1.1

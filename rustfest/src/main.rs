@@ -144,7 +144,7 @@ fn main() {
         let mut swap_scenes = view.reload;
         if view.current_slide != slide {
             slide = view.current_slide;
-            anim = Some(if anim.is_none() { 0 } else { ANIM_FRAMES });
+            anim = Some(if slides.get(slide).transition && anim.is_none() { 0 } else { ANIM_FRAMES });
         }
 
         // This is the crappiest hard-coded animation ever, Don't do this at home, kids.
@@ -160,7 +160,9 @@ fn main() {
             anim_offset = tf * tf;
             if *t == ANIM_FRAMES {
                 swap_scenes = true;
-                view.zoom *= 0.8;
+                if slides.get(slide).transition {
+                    view.zoom *= 0.8;
+                }
             }
             *t += 1;
         }
@@ -496,6 +498,7 @@ pub struct RenderScene {
     color_1: [f32; 4],
     color_2: [f32; 4],
     blueprint: f32,
+    transition: bool,
 }
 
 //#[derive(Deserialize)]
@@ -531,7 +534,7 @@ pub enum PathData {
     Path(Path),
 }
 
-const DEFAULT_TOLERANCE: f32 = 0.1;
+const DEFAULT_TOLERANCE: f32 = 0.05;
 
 impl Scene {
     fn load_svg(src_path: &str) -> Self {
@@ -605,7 +608,7 @@ impl Scene {
         scene
     }
 
-    fn build(&self, ctx: &mut Context, color_1: [f32; 4], color_2: [f32; 4], blueprint: f32) -> RenderScene {
+    fn build(&self, ctx: &mut Context, color_1: [f32; 4], color_2: [f32; 4], blueprint: f32, transition: bool) -> RenderScene {
         let mut primitives = Vec::with_capacity(shaders::PRIM_BUFFER_LEN);
         let mut transforms = Vec::with_capacity(shaders::PRIM_BUFFER_LEN);
         let mut geometry = VertexBuffers::new();
@@ -676,7 +679,8 @@ impl Scene {
             geometry,
             color_1,
             color_2,
-            blueprint
+            blueprint,
+            transition,
         }
     }
 }
@@ -756,6 +760,7 @@ fn load_slides() -> Slides {
     let reader = BufReader::new(&list_file);
     for line in reader.lines() {
         let mut line = line.unwrap();
+        let transition = !line.contains("no-transition");
         let mut line = line.split_whitespace();
         let name = line.next().unwrap().to_string();
 
@@ -784,7 +789,7 @@ fn load_slides() -> Slides {
 
         println!("{:?} - {:?}/{:?}", name, color_1, color_2);
 
-        scenes.insert(name, scene.build(&mut ctx, color_1, color_2, blueprint));
+        scenes.insert(name, scene.build(&mut ctx, color_1, color_2, blueprint, transition));
     }
 
     Slides {
