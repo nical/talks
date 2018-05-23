@@ -30,6 +30,9 @@ sweep-13-2.svg  1.0 0.1 0.3    0.8 0.1 0.2     0.7  no-transition
 sweep-14.svg    0.2 0.8 0.4    0.0 0.6 0.2     1.0  no-transition
 map.svg
 rpg.svg
+stroke.svg      0.3 0.3 0.3    0.0 0.0 0.0     0.3
 zbuffer.svg     1.0 1.0 1.0    1.0 1.0 1.0     1.0
 pathfinder.svg  0.2 0.2 0.2    0.0 0.0 0.0     1.2
-end.svg         0.2 0.1 0.3    0.4 0.0 0.1     1.1
+adv-monotone.svg 1.0 1.0 1.0   0.9 0.9 0.9     0.9
+quad-tess.svg   1.0 1.0 1.0    0.7 0.7 0.7     0.9
+end.svg         0.3 0.3 0.3    0.0 0.0 0.0     0.3

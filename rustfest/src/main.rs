@@ -144,7 +144,12 @@ fn main() {
         let mut swap_scenes = view.reload;
         if view.current_slide != slide {
             slide = view.current_slide;
-            anim = Some(if slides.get(slide).transition && anim.is_none() { 0 } else { ANIM_FRAMES });
+            if slides.get(slide).transition {
+                anim = Some(if anim.is_none() { 0 } else { ANIM_FRAMES });
+            } else {
+                anim = None;
+                swap_scenes = true;
+            }
         }
 
         // This is the crappiest hard-coded animation ever, Don't do this at home, kids.
