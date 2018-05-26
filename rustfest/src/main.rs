@@ -539,7 +539,7 @@ pub enum PathData {
     Path(Path),
 }
 
-const DEFAULT_TOLERANCE: f32 = 0.05;
+const DEFAULT_TOLERANCE: f32 = 0.01;
 
 impl Scene {
     fn load_svg(src_path: &str) -> Self {

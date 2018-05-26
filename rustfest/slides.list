@@ -1,5 +1,5 @@
 intro.svg       0.2 0.2 0.2    0.0 0.0 0.0     1.1
-logo.svg        0.2 0.1 0.3    0.4 0.0 0.1     1.1
+logo.svg        0.4 0.1 0.0    0.4 0.0 0.0      1.1
 rstr-vctr.svg   1.0 1.0 1.0    0.7 0.7 0.7     1.0
 tiger.svg       0.2 0.1 0.3    0.4 0.0 0.1     1.0
 map.svg         0.0 0.5 0.9    0.0 0.1 0.6     0.7
@@ -8,6 +8,7 @@ rpg.svg         0.3 0.3 0.3    0.0 0.0 0.0     0.3
 screen.svg      0.7 0.3 0.3    0.0 0.0 0.3     0.9
 3d.svg          0.3 0.3 0.3    0.0 0.0 0.0     0.9
 logo.svg
+tessellation.svg 0.0 0.4 0.1   0.0 0.1 0.1     1.1
 convex.svg      1.0 1.0 1.0    0.8 0.8 1.0     1.0
 concave.svg     0.5 0.5 0.5    0.8 0.8 0.8     1.0
 monotonic.svg   1.0 1.0 1.0    0.8 0.8 1.0     1.0
@@ -31,9 +32,9 @@ sweep-13-2.svg  1.0 0.1 0.3    0.8 0.1 0.2     0.7  no-transition
 sweep-14.svg    0.2 0.8 0.4    0.0 0.6 0.2     1.0  no-transition
 map.svg
 rpg.svg
-stroke.svg      0.3 0.3 0.3    0.0 0.0 0.0     0.3
+stroke.svg      0.2 0.2 0.4    0.0 0.0 0.0     0.7
 zbuffer.svg     1.0 1.0 1.0    1.0 1.0 1.0     1.0
 pathfinder.svg  0.2 0.2 0.2    0.0 0.0 0.0     1.2
-adv-monotone.svg 1.0 1.0 1.0   0.9 0.9 0.9     0.9
-quad-tess.svg   1.0 1.0 1.0    0.7 0.7 0.7     0.9
+adv-monotone.svg 1.0 1.0 1.0   0.9 0.9 0.9     1.0
+quad-tess.svg   1.0 1.0 1.0    0.7 0.7 0.7     1.0
 end.svg         0.1 0.1 0.1    0.0 0.0 0.0     0.3

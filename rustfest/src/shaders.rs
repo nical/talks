@@ -27,7 +27,7 @@ pub static BACKGROUND_FRAGMENT: &'static str = &"
         vec2 px_position = v_position * vec2(1.0, -1.0) * u_resolution * 0.5;
 
         // #005fa4
-        float vignette = clamp(0.0, 1.0, (0.7*length(v_position)));
+        float vignette = clamp(0.7 * length(v_position), 0.0, 1.0);
         out_color = mix(
             u_bg_color_1,
             u_bg_color_2,
